@@ -1,0 +1,7 @@
+---
+description: 
+globs: services/**
+alwaysApply: false
+---
+https://hono.dev/llms.txt
+https://www.better-auth.com/llms.txt
