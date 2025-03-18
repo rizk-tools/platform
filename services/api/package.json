@@ -1,7 +1,10 @@
 {
   "name": "api",
   "scripts": {
-    "dev": "bun run --hot src/index.ts"
+    "dev": "bun run --hot src/index.ts",
+    "db:studio": "bunx drizzle-kit studio --port 3002",
+    "db:push": "bunx drizzle-kit push",
+    "db:generate": "bunx drizzle-kit generate"
   },
   "dependencies": {
     "better-auth": "^1.2.4",

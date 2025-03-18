@@ -3,6 +3,8 @@ export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
   devtools: { enabled: true },
 
+  ssr: false,
+
   modules: [
     "@nuxt/eslint",
     "@nuxt/test-utils",
@@ -11,6 +13,8 @@ export default defineNuxtConfig({
     "@vueuse/nuxt",
     "@nuxt/icon",
     "@nuxt/fonts",
+    "@vee-validate/nuxt",
+    "@morev/vue-transitions/nuxt"
   ],
 
   tailwindcss: {

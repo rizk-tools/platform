@@ -13,4 +13,7 @@ app.use(authMiddleware)
 app.route("/api", api);
 
 
-export default app
+export default {
+  port: 3001,
+  fetch: app.fetch,
+} 

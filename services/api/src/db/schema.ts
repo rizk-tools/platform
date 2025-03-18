@@ -61,7 +61,7 @@ export const policiesTable = pgTable("policies", {
   isActive: boolean().default(true),
   content: jsonb().notNull(), // JSON structure containing the policy rules
   version: varchar({ length: 50 }).notNull(),
-  createdById: integer().references(() => user.id),
+  createdById: text().references(() => user.id),
   createdAt: timestamp().defaultNow(),
   updatedAt: timestamp().defaultNow(),
 });
@@ -73,7 +73,6 @@ export const policyRelations = relations(policiesTable, ({ one, many }) => ({
   }),
   policyRules: many(policyRulesTable),
   deployments: many(policyDeploymentsTable),
-  auditLogs: many(auditLogsTable),
 }));
 
 export const policyRulesTable = pgTable("policy_rules", {
@@ -116,7 +115,7 @@ export const policyDeploymentsTable = pgTable("policy_deployments", {
   policyId: uuid().notNull().references(() => policiesTable.id),
   aiModelId: uuid().references(() => aiModelsTable.id),
   environment: varchar({ length: 50 }).notNull(), // e.g., "development", "staging", "production"
-  deployedBy: integer().references(() => user.id),
+  deployedBy: text().references(() => user.id),
   status: varchar({ length: 50 }).notNull(), // e.g., "active", "inactive", "failed"
   deploymentMetadata: jsonb(),
   createdAt: timestamp().defaultNow(),
@@ -181,7 +180,7 @@ export const policyEvaluationRelations = relations(policyEvaluationsTable, ({ on
 
 export const auditLogsTable = pgTable("audit_logs", {
   id: serial().primaryKey(),
-  userId: integer().references(() => user.id),
+  userId: text().references(() => user.id),
   action: varchar({ length: 100 }).notNull(), // e.g., "policy_created", "policy_modified", "rule_added"
   resourceType: varchar({ length: 100 }).notNull(), // e.g., "policy", "rule", "deployment"
   resourceId: varchar({ length: 255 }).notNull(),
@@ -195,6 +194,11 @@ export const auditLogRelations = relations(auditLogsTable, ({ one }) => ({
   user: one(user, {
     fields: [auditLogsTable.userId],
     references: [user.id],
+  }),
+  policy: one(policiesTable, {
+    fields: [auditLogsTable.resourceId],
+    references: [policiesTable.id],
+    relationName: 'policyAuditLogs'
   }),
 }));
 
@@ -213,7 +217,7 @@ export const integrationsTable = pgTable("integrations", {
   name: varchar({ length: 255 }).notNull(),
   configuration: jsonb().notNull(),
   isActive: boolean().default(true),
-  createdById: integer().references(() => user.id),
+  createdById: text().references(() => user.id),
   createdAt: timestamp().defaultNow(),
   updatedAt: timestamp().defaultNow(),
 });
