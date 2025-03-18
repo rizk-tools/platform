@@ -53,6 +53,7 @@ export const userRelations = relations(user, ({ many }) => ({
 }));
 
 export const policiesTable = pgTable("policies", {
+  prueba: varchar({ length: 255 }).notNull(),
   id: uuid().primaryKey().defaultRandom(),
   name: varchar({ length: 255 }).notNull(),
   description: text(),
