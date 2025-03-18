@@ -1,7 +1,7 @@
-import { Variables } from "../types/hono";
+import type { Variables } from "@/types/hono";
 import { Hono } from "hono";
-import { db } from "../db";
-import { policiesTable } from "../db/schema";
+import { db } from "@/db";
+import { policiesTable } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 
 const app = new Hono<{ Variables: Variables }>()
@@ -15,7 +15,12 @@ app.get("/", async (c) => {
       eq(policiesTable.createdById, user.id)
     )
 
-  return c.json({ data: policies, metadata: { total: policies.length } })
+  return c.json({
+    data: policies,
+    metadata: {
+      total: policies.length
+    }
+  })
 })
 
 app.get("/:id", async (c) => {
@@ -31,7 +36,9 @@ app.get("/:id", async (c) => {
       )
     )
 
-  return c.json({ data: policies })
+  return c.json({
+    data: policies
+  })
 })
 
 

@@ -1,8 +1,8 @@
-import type { Variables } from "./types/hono";
+import type { Variables } from "@/types/hono";
 import { Hono } from "hono";
-import { auth } from "./lib/auth";
-import { authMiddleware } from "./middleware/auth";
-import api from "./routes";
+import { auth } from "@/lib/auth";
+import { authMiddleware } from "@/middleware/auth";
+import api from "@/routes";
 
 const app = new Hono<{ Variables: Variables }>()
 

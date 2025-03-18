@@ -1,14 +1,7 @@
-import { createFactory } from 'hono/factory'
-import { auth } from '../lib/auth'
+import { createMiddleware } from 'hono/factory'
+import { auth } from '@/lib/auth'
 
-type Variables = {
-  user: any
-  session: any
-}
-
-const factory = createFactory<{ Variables: Variables }>()
-
-export const authMiddleware = factory.createMiddleware(async (c, next) => {
+export const authMiddleware = createMiddleware(async (c, next) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
 
   if (!session) {
