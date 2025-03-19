@@ -1,5 +1,5 @@
 {
-  "name": "nuxt-app",
+  "name": "@rizk/app",
   "private": true,
   "type": "module",
   "scripts": {

@@ -1,16 +1,11 @@
-import type { Variables } from "@/types/hono";
-import { Hono } from "hono";
+import { eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import { policiesTable } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
 import createRouter from "@/lib/create-router";
-import { BASE_PATH } from "@/lib/constants";
-import type { AppOpenAPI } from "@/lib/types";
 
+const router = createRouter()
 
-const app = new Hono<{ Variables: Variables }>()
-
-app.get("/", async (c) => {
+router.get("/", async (c) => {
   const user = c.get("user")
 
   const policies = await db.select()
@@ -27,7 +22,7 @@ app.get("/", async (c) => {
   })
 })
 
-app.get("/:id", async (c) => {
+router.get("/:id", async (c) => {
   const user = c.get("user")
   const id = c.req.param("id")
 
@@ -45,14 +40,4 @@ app.get("/:id", async (c) => {
   })
 })
 
-export function registerRoutes (app: AppOpenAPI) {
-  // return app
-  //   .route("/", index)
-  //   .route("/", tasks);
-}
-
-export const router = registerRoutes(
-  createRouter().basePath(BASE_PATH),
-);
-
-export type router = typeof router;
+export default router;

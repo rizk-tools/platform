@@ -8,6 +8,10 @@ export type AppEnv = {
     GITHUB_CLIENT_ID: string;
     GITHUB_CLIENT_SECRET: string;
   };
+  Variables: {
+    user: any
+    session: any
+  }
 };
 
 // eslint-disable-next-line ts/no-empty-object-type
