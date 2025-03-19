@@ -7,13 +7,13 @@ import { authMiddleware } from "@/middleware/auth";
 import policies from "@/routes/policies";
 
 export function registerRoutes (app: AppOpenAPI) {
-  app.on(["POST", "GET"], "/auth/**", (c) => auth.handler(c.req.raw));
-  
-  app.use(authMiddleware)
+  // app.on(["POST", "GET"], "/auth/**", (c) => auth.handler(c.req.raw));
 
-  app.route("/policies", policies);
+  // app.use(authMiddleware)
 
-  return app
+  // app.route("/policies", policies);
+
+  return app.route("/", policies);
 }
 
 export const router = registerRoutes(

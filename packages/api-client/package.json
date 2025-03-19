@@ -1,13 +1,12 @@
 {
   "name": "@rizk/api-client",
-  "module": "index.ts",
   "version": "0.0.1",
   "type": "module",
   "private": true,
   "main": "./dist/index.js",
   "scripts": {
-    "dev": "bun run --watch index.ts",
-    "build": "bun build ./index.ts --outdir ./dist"
+    "dev": "bun run --watch src/index.ts",
+    "build": "bun build src/index.ts --outdir ./dist"
   },
   "devDependencies": {
     "@types/bun": "latest"
@@ -16,6 +15,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@rizk/api": "workspace:*"
+    "@rizk/api": "workspace:*",
+    "@types/node": "^22.13.10"
   }
 }
