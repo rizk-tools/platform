@@ -1,5 +1,12 @@
 {
-  "name": "api",
+  "name": "@rizk/api",
+  "type": "module",
+  "version": "0.0.1",
+  "private": true,
+  "exports": {
+    "./routes": "./src/routes/index.ts",
+    "./schema": "./src/db/schema.ts"
+  },
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "db:studio": "bunx drizzle-kit studio --port 3002",
@@ -7,11 +14,13 @@
     "db:generate": "bunx drizzle-kit generate"
   },
   "dependencies": {
+    "@hono/zod-openapi": "^0.19.2",
     "better-auth": "^1.2.4",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.40.1",
     "hono": "^4.7.4",
-    "pg": "^8.14.1"
+    "pg": "^8.14.1",
+    "stoker": "^1.4.2"
   },
   "devDependencies": {
     "@types/bun": "latest",

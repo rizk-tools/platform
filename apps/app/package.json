@@ -17,6 +17,7 @@
     "@nuxt/test-utils": "3.17.2",
     "@nuxtjs/color-mode": "^3.5.2",
     "@nuxtjs/tailwindcss": "^6.13.2",
+    "@rizk/api-client": "workspace:*",
     "@tailwindcss/forms": "^0.5.10",
     "@vee-validate/nuxt": "^4.15.0",
     "@vee-validate/zod": "^4.15.0",
@@ -28,6 +29,7 @@
     "tailwindcss-animate": "^1.0.7",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0",
+    "vue-sonner": "^1.3.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
