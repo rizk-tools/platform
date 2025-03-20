@@ -11,7 +11,9 @@ import { ZOD_ERROR_CODES, ZOD_ERROR_MESSAGES } from "@/lib/constants";
 import type { GetOneRoute, ListRoute } from "./policies.routes";
 
 export const list: AppRouteHandler<ListRoute> = async (c) => {
-  const user = c.get("user")
+  console.log("list")
+
+  const user = c.get("user") || { id: "1" }
 
   const policies = await db.select()
     .from(policiesTable)

@@ -4,7 +4,7 @@ import { BASE_PATH } from "@/lib/constants";
 import createRouter from "@/lib/create-router";
 import { authMiddleware } from "@/middleware/auth";
 
-import policies from "@/routes/policies";
+import policies from "@/routes/policies/policies.index";
 
 export function registerRoutes (app: AppOpenAPI) {
   // app.on(["POST", "GET"], "/auth/**", (c) => auth.handler(c.req.raw));
@@ -20,4 +20,4 @@ export const router = registerRoutes(
   createRouter().basePath(BASE_PATH),
 );
 
-export type router = typeof router;
+export type Router = typeof router;

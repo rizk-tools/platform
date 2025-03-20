@@ -42,5 +42,13 @@ export default defineNuxtConfig({
 
   build: {
     transpile: ["vue-sonner"]
-  }
+  },
+
+  nitro: {
+    routeRules: {
+      "/api": {
+        proxy: "http://localhost:3001"
+      }
+    },
+  },
 });

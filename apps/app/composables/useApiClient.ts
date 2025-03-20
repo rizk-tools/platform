@@ -1,7 +1,10 @@
-import apiClient from "@rizk/api-client";
+import type { Router } from "@rizk/api/routes";
+import { hc } from "hono/client";
 
-export default function () {
-  const client = apiClient("/");
+export const client = hc<Router>("");
+export type Client = typeof client;
+
+export default function (): Client {
 
   return client;
 };
