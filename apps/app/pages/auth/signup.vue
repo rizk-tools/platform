@@ -1,8 +1,9 @@
-/sideba
 <script lang="ts" setup>
 import { z } from "zod";
+import { auth } from "@/lib/auth";
 
 const client = useApiClient();
+const router = useRouter()
 
 const title = "Sign Up";
 const description = "Create an account to get started.";
@@ -39,26 +40,50 @@ const submit = handleSubmit(async (values) => {
   try {
     isSubmitting.value = true;
 
-    console.log(values)
+    const response = await auth.signUp.email({
+      email: values.email,
+      password: values.password,
+      name: values.name
+    })
+
+    if (response.error) {
+      throw new Error(response.error.message)
+    }
+
+    console.log(response)
 
     useSonner("Account created!", {
       description: "You have successfully created an account.",
     });
+
+    // Navigate to the login page after successful signup
+    router.push('/auth/login')
   } catch (error) {
-    console.log(error)
+    console.error(error)
 
     useSonner("Error creating account", {
-      description: "Please try again.",
+      description: error instanceof Error ? error.message : "Please try again.",
     });
   } finally {
     isSubmitting.value = false;
   }
 });
 
-const signInWithGoogle = () => {
-  useSonner("Getting started!", {
-    description: "Redirecting to Google...",
-  });
+const signInWithGoogle = async () => {
+  try {
+    const response = await auth.signInWithProvider('google')
+    
+    if (!response.ok) {
+      throw new Error('Failed to initiate Google sign in')
+    }
+
+    window.location.href = response.url
+  } catch (error) {
+    console.error(error)
+    useSonner("Error signing in with Google", {
+      description: "Please try again.",
+    });
+  }
 };
 </script>
 

@@ -3,7 +3,6 @@ import * as HttpStatusCodes from "stoker/http-status-codes";
 import { jsonContent } from "stoker/openapi/helpers";
 import { createErrorSchema, IdParamsSchema, IdUUIDParamsSchema } from "stoker/openapi/schemas";
 import { createSelectSchema } from "drizzle-zod";
-
 import { policiesTable } from "@/db/schema";
 import { notFoundSchema } from "@/lib/constants";
 
