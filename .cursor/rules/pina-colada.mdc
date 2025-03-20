@@ -1,0 +1,54 @@
+---
+description: Pinia-based state management library for structured, centralized state handling
+globs: 
+alwaysApply: false
+---
+# Overview
+Pinia Colada is the perfect companion to Pinia to handle async state management in your Vue applications. It will remove the need to write boilerplate code for data fetching and transparently bring caching, deduplication, invalidation, stale while revalidate (swr) and much more. Allowing you to focus on building the best user experience for your users. You don't even need to learn Pinia to use Pinia Colada because it exposes its own composables.
+
+## Getting Started
+@Quick Start: This section provides an introductory guide to setting up and using Pinia Colada, including installation instructions and basic usage examples.
+
+## Core Concepts
+### Queries
+[Queries](mdc:https:/pinia-colada.esm.dev/guide/queries.html): This section explains how to perform queries using Pinia Colada, detailing the syntax and options available for fetching data.
+
+[Query Keys](mdc:https:/pinia-colada.esm.dev/guide/query-keys.html): Learn about the importance of query keys in managing and identifying queries within your application.
+
+[Paginated Queries](mdc:https:/pinia-colada.esm.dev/guide/paginated-queries.html): This part covers how to handle paginated data with queries, including best practices and examples.
+
+### Mutations
+[Mutations](mdc:https:/pinia-colada.esm.dev/guide/mutations.html): This section describes how to perform mutations in Pinia Colada, including the syntax and use cases for updating state.
+
+### Query Management
+[Query Invalidation](mdc:https:/pinia-colada.esm.dev/guide/query-invalidation.html): Understand how to invalidate queries to ensure that your application data remains fresh and up-to-date.
+
+[Optimistic Updates](mdc:https:/pinia-colada.esm.dev/guide/optimistic-updates.html): This section discusses implementing optimistic updates to improve user experience by predicting the outcome of mutations.
+
+[Query Cache](mdc:https:/pinia-colada.esm.dev/advanced/query-cache.html): Learn about the query caching mechanism in Pinia Colada, which helps optimize data fetching and performance.
+
+## Advanced Features
+### Reusable Queries
+[Reusable Queries](mdc:https:/pinia-colada.esm.dev/guide/queries.html#reusable-queries): This section explains how to create and use reusable queries to streamline your code and improve maintainability.
+
+### Plugins
+[Plugins](mdc:https:/pinia-colada.esm.dev/advanced/plugins.html): Discover how to extend the functionality of Pinia Colada with plugins, including examples and use cases.
+
+## Additional Resources
+[API](mdc:https:/pinia-colada.esm.dev/api): Access the complete API documentation for Pinia Colada, detailing all available functions and interfaces.
+
+[Cookbook](mdc:https:/pinia-colada.esm.dev/cookbook): A collection of practical examples and recipes for common use cases in Pinia Colada.
+
+[Changelog](mdc:https:/github.com/posva/pinia-colada/blob/main/CHANGELOG.md): Keep track of updates and changes made to Pinia Colada, including new features and bug fixes.
+
+[Discussions](mdc:https:/github.com/posva/pinia-colada/discussions): Engage with the community to discuss features, ask questions, and share insights about Pinia Colada.
+
+## Migration
+[Migrating from @tanstack/vue-query to @pinia/colada](mdc:https:/pinia-colada.esm.dev/cookbook/migration-tvq.html): This guide provides instructions for users transitioning from the @tanstack/vue-query library to Pinia Colada.
+
+## Functions
+[Function: defineQuery() - Pinia Colada](mdc:https:/pinia-colada.esm.dev/api/@pinia/colada/functions/defineQuery.html): Detailed documentation on the `defineQuery` function, including parameters and return values.
+
+[Function: PiniaColadaQueryHooksPlugin() | Pinia Colada](mdc:https:/pinia-colada.esm.dev/api/@pinia/colada/functions/PiniaColadaQueryHooksPlugin.html): Learn about the `PiniaColadaQueryHooksPlugin` function and how to use it effectively.
+
+[Interface: PiniaColadaPlugin() | Pinia Colada](mdc:https:/pinia-colada.esm.dev/api/@pinia/colada/interfaces/PiniaColadaPlugin.html): Explore the `PiniaColadaPlugin` interface, including its properties and methods.

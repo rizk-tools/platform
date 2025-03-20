@@ -1,6 +1,6 @@
 ---
 description: 
-globs: services/**
+globs: apps/api/**
 alwaysApply: false
 ---
 https://hono.dev/llms.txt

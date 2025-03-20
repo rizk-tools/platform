@@ -1,0 +1,140 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Rizk: The Compliance Layer for Enterprise AI
+
+## Overview
+Rizk is an **open-source compliance-as-code SDK** that empowers enterprises to deploy AI with confidence, security, and regulatory alignment. As AI adoption accelerates, companies face increasing scrutiny and compliance risks. Rizk provides a **real-time monitoring and automated policy enforcement layer**, ensuring AI systems adhere to ethical, legal, and business policies seamlessly.
+
+## The Challenge
+- **AI compliance is complex and high-risk.** Only **24% of GenAI initiatives** meet security standards, with non-compliance fines averaging **$3.2M in 2024**.
+- **Unregulated AI models are unpredictable.** They can generate **biased, misleading, or legally non-compliant outputs**, exposing enterprises to reputational and financial risks.
+- **Regulatory pressure is mounting.** Governments and industry bodies are enforcing compliance through frameworks like the **EU AI Act** and **NIST AI RMF**, making governance a top priority for enterprise AI teams.
+
+## How Rizk Solves It
+### **Compliance as Code**
+Rizk provides a **developer-friendly SDK** that allows enterprises to:
+- **Define AI policies as code** – Enforce regulatory and ethical standards programmatically.
+- **Apply real-time policy enforcement** – Block or modify AI responses that violate compliance rules.
+- **Enable full auditability** – Maintain transparent logs for security and compliance teams.
+
+### **Key Features**
+✅ **Open-Source & Enterprise-Grade** – Transparent, secure, and community-driven.
+✅ **Seamless AI Integration** – Works with **LangChain, LlamaIndex, OpenAI, AutoGPT, and custom AI agents**.
+✅ **Real-Time AI Monitoring** – Detects and blocks policy-violating responses in milliseconds.
+✅ **Regulatory Compliance Ready** – Pre-built policy templates for **GDPR, HIPAA, SOC 2, and the EU AI Act**.
+✅ **End-to-End Observability** – Integrated with **OpenTelemetry** for full visibility into AI behavior.
+✅ **Minimal Performance Impact** – Adds less than **5ms latency** per AI request.
+
+## How It Works
+### **1. Define AI Compliance Policies**
+Policies are written in **JSON/YAML or a domain-specific language (DSL)** and stored in **Git for version control and auditing**.
+```json
+{
+  "rule": "no_personal_data",
+  "description": "Prevent AI from exposing sensitive personal data.",
+  "action": "block"
+}
+```
+
+### **2. Enforce Policies at Runtime**
+Rizk’s **lightweight SDK** evaluates AI responses **before they are delivered**, ensuring compliance.
+```python
+from rizk import PolicyEngine
+
+environment = PolicyEngine(policies="your_policies.json")
+safe_response = environment.apply(ai_response)
+```
+
+### **3. Monitor & Audit AI Behavior**
+- **Real-time observability with OpenTelemetry**.
+- **Automated compliance reports for legal and security teams**.
+
+## Use Cases
+### **Enterprise AI Governance**
+✔ Ensure AI-generated content aligns with **corporate policies and ethical guidelines**.
+✔ Prevent **data leaks, misinformation, and regulatory violations**.
+
+### **Industry-Specific Compliance**
+✔ **Finance** – Enforce AI compliance with **SEC, GDPR, and SOX** regulations.
+✔ **Healthcare** – Prevent **HIPAA violations and unauthorized data exposure**.
+✔ **Legal & HR** – Ensure AI-generated insights comply with **anti-discrimination laws and fair hiring practices**.
+
+## Market & Traction
+- **3 active pilots** demonstrating an **80% reduction in unnecessary AI prompts**, helping enterprises build **secure and compliant AI**.
+- The AI compliance market is projected to hit **$60B by 2028** (22% CAGR).
+- Organizations face growing regulatory pressure to adopt **responsible AI frameworks**.
+
+## Meet the Team
+Rizk is founded by experts in AI, risk management, and SaaS scalability:
+- **Ricardo Sandoval** – 10+ years in **risk management**, overseeing a **$20B portfolio**, ex-CTO of a GenAI startup.
+- **Carlos Osuna** – Lead GenAI Engineer with **enterprise AI deployments** across Latin America and the Middle East.
+- **Fernando de la Rosa** – SaaS expert, scaled **products to 15K+ users**, specialized in **healthtech software**.
+
+## Getting Started
+### **Install the SDK**
+```bash
+pip install rizk-sdk
+```
+
+### **Define & Enforce Policies**
+```python
+from rizk import PolicyEngine
+
+environment = PolicyEngine(policies="your_policies.json")
+safe_response = environment.apply(ai_response)
+```
+
+## Future Roadmap: API & Architecture
+While Rizk is already enabling real-time compliance enforcement, our **long-term vision** includes a scalable API architecture with enhanced observability, automation, and multi-tenant support.
+
+### **Planned Enhancements**
+✅ **Queue-Based Processing** – AI policy enforcement will support **asynchronous job execution**, allowing batch processing of AI responses for high-scale applications.
+✅ **Webhooks & API Integrations** – Enterprises will be able to **push compliance reports** to their existing security infrastructure (SIEMs, logging tools, analytics).
+✅ **Real-Time Streaming Compliance** – Leveraging **Kafka, Redis Streams, or RabbitMQ** for real-time AI response validation in high-throughput environments.
+✅ **Multi-Tenant Observability** – OpenTelemetry Collector will support **dynamic routing per tenant**, enabling **custom exporters** for different enterprise clients.
+✅ **Self-Healing Mechanisms** – Automated **policy learning and adaptive enforcement** to refine AI guardrails based on real-world violations.
+
+### **API Architecture (Future Vision)**
+The API will operate in **two primary layers**:
+1️⃣ **Synchronous Processing:** AI responses will be validated in real-time before reaching end-users.
+2️⃣ **Asynchronous Queue Processing:** For large-scale deployments, responses will be queued, processed, and flagged if they violate policies.
+
+🚀 **Goal:** Make Rizk the **default compliance middleware** for enterprise AI applications, ensuring **zero-trust enforcement at scale**.
+
+## Join the Beta
+Rizk is currently in **beta**, and we're inviting enterprise AI teams to help shape the future of AI compliance.
+
+🔗 **[Join the Beta](mdc:https:/rizk.tools/beta)**  
+🔗 **[View on GitHub](mdc:https:/github.com/rizk-tools)**  
+🔗 **[Join the Community](mdc:https:/rizk.tools/community)**  
+
+## The Vision
+We are building the **global standard for AI compliance**, enabling enterprises to deploy AI **with trust, security, and regulatory alignment**. By 2025, we aim to:
+- Secure **20+ enterprise customers** ($300K ARR).
+- Establish **EU AI Act compliance frameworks**.
+- Expand Rizk’s **open-source ecosystem** with a growing contributor base.
+
+# Monorepo Structure
+
+This monorepo uses **Bun** and is structured with two main apps (`api` and `app`) inside the `apps/` folder, and shared packages inside the `packages/` folder.
+
+## Project Structure
+
+- **Root (`@rizk/platform`):** Central configuration and workspace definitions.
+  - `package.json`: Defines workspace patterns (`apps/*`, `packages/*`), Bun dependencies, and TypeScript configurations.
+
+- **Apps (`apps/`):**
+  - `api`: Backend API application.
+    - Name: `@rizk/api`
+    - Dependencies: Backend-specific modules, including database connections and APIs.
+
+  - `app`: Frontend or main client application.
+    - Name: `@rizk/app`
+    - Dependencies: Frontend modules, UI libraries, and API clients.
+
+- **Shared Packages (`packages/`):**
+  - Shared utilities, types, and modules reusable by both `api` and `app`.
+

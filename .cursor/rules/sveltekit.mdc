@@ -1,6 +1,0 @@
----
-description: Sveltekit
-globs: apps/**
-alwaysApply: false
----
-https://svelte.dev/llms.txt
