@@ -11,7 +11,8 @@
     "dev": "bun run --hot src/app.ts",
     "db:studio": "bunx drizzle-kit studio --port 3002",
     "db:push": "bunx drizzle-kit push",
-    "db:generate": "bunx drizzle-kit generate"
+    "db:generate": "bunx drizzle-kit generate",
+    "auth:generate": "bunx @better-auth/cli@latest generate"
   },
   "dependencies": {
     "@hono/zod-openapi": "^0.19.2",

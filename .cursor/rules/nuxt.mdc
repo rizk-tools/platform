@@ -60,10 +60,12 @@ Vue 3 and Composition API Best Practices
 - Leverage ref, reactive, and computed for reactive state management.
 - Use provide/inject for dependency injection when appropriate.
 - Implement custom composables for reusable logic.
+- Write the <script></script> on top and the <template></template> at the bottom.
 
 Fetching Data
 - Use [pina-colada.mdc](mdc:.cursor/rules/pina-colada.mdc) to handle async state management.
 - Do not write an http request using fetch, axios or similar unless I ask you to.
+- Use Hono's RPC functions to get the data from the server.
 
 Third party libraries
 - use vue-sonnar to add sonnar alerts

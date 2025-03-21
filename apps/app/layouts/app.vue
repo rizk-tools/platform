@@ -202,8 +202,9 @@ import { auth } from "@/lib/auth";
 
 const router = useRouter();
 
-// Breadcrumb items
-const breadcrumbItems = ref([
+// Breadcrumb items from plugin
+const { $breadcrumbs } = useNuxtApp();
+const breadcrumbItems = $breadcrumbs || ref([
   { label: "Compliance Rules", link: "#" },
 ]);
 
@@ -344,7 +345,7 @@ const data = {
         },
         {
           title: "API Keys",
-          url: "#",
+          url: "/settings/api-keys",
         },
       ],
     },
