@@ -132,7 +132,9 @@
                   class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                   <UiAvatar class="size-8 rounded-lg">
                     <UiAvatarImage :src="data.user.avatar" :alt="data.user.name" />
-                    <UiAvatarFallback class="rounded-lg">BB</UiAvatarFallback>
+                    <UiAvatarFallback class="rounded-lg">{{ data.user.name ? data.user.name.substring(0,
+                      2).toUpperCase() :
+                      'U' }}</UiAvatarFallback>
                   </UiAvatar>
                   <div class="grid flex-1 text-left text-sm leading-tight">
                     <span class="truncate font-semibold">{{ data.user.name }}</span>
@@ -147,7 +149,9 @@
                   <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                     <UiAvatar class="size-8 rounded-lg">
                       <UiAvatarImage :src="data.user.avatar" :alt="data.user.name" />
-                      <UiAvatarFallback class="rounded-lg">BB</UiAvatarFallback>
+                      <UiAvatarFallback class="rounded-lg">{{ data.user.name ? data.user.name.substring(0,
+                        2).toUpperCase() :
+                        'U' }}</UiAvatarFallback>
                     </UiAvatar>
                     <div class="grid flex-1 text-left text-sm leading-tight">
                       <span class="truncate font-semibold">{{ data.user.name }}</span>
@@ -167,7 +171,7 @@
                   <UiDropdownMenuItem icon="lucide:bell" title="Notifications" />
                 </UiDropdownMenuGroup>
                 <UiDropdownMenuSeparator />
-                <UiDropdownMenuItem icon="lucide:log-out" title="Log out" />
+                <UiDropdownMenuItem icon="lucide:log-out" title="Log out" @click="handleSignOut" />
               </UiDropdownMenuContent>
             </UiDropdownMenu>
           </UiSidebarMenuItem>
@@ -194,18 +198,29 @@
 </template>
 
 <script lang="ts" setup>
+import { auth } from "@/lib/auth";
+
+const router = useRouter();
+
 // Breadcrumb items
 const breadcrumbItems = ref([
-  { label: "Policies", link: "#" },
   { label: "Compliance Rules", link: "#" },
 ]);
 
-// This is sample data.
+const { data: session } = await auth.getSession();
+
+if (!session) {
+  router.push('/auth/login');
+
+  throw new Error("No session found");
+}
+
+
 const data = {
   user: {
-    name: "breezy",
-    email: "m@example.com",
-    avatar: "https://behonbaker.com/icon.png",
+    name: session.user.name,
+    email: session.user.email,
+    avatar: session.user.image || "",
   },
   teams: [
     {
@@ -375,6 +390,24 @@ function setActiveProject (project: Project) {
 function createProject () {
   console.log("createProject");
 }
+
+
+async function handleSignOut () {
+  try {
+    await auth.signOut();
+
+    useSonner.success("Signed out successfully", {
+      description: "You have been signed out of your account.",
+    });
+    // Redirect to login page
+    router.push('/auth/login');
+  } catch (error) {
+    console.error("Error signing out:", error);
+    useSonner.error("Sign out failed", {
+      description: "There was an error signing out. Please try again.",
+    });
+  }
+};
 
 useSeoMeta({ title: "Rizk - AI Compliance Platform" });
 </script>

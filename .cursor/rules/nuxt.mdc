@@ -11,6 +11,7 @@ Code Style and Structure
 - Prefer iteration and modularization over code duplication.
 - Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
 - Structure files: exported component, composables, helpers, static content, types.
+- Use traditional function declarations instead of arrow functions.
 
 Naming Conventions
 - Use lowercase with dashes for directories (e.g., components/auth-wizard).
@@ -52,6 +53,7 @@ Nuxt-specific Guidelines
   - Leverage Nuxt plugins for global functionality.
 - Use useFetch and useAsyncData for data fetching.
 - Implement SEO best practices using Nuxt's useHead and useSeoMeta.
+- Use auto import for components and composables.
 
 Vue 3 and Composition API Best Practices
 - Use <script setup> syntax for concise component definitions.
@@ -62,10 +64,8 @@ Vue 3 and Composition API Best Practices
 Fetching Data
 - Use [pina-colada.mdc](mdc:.cursor/rules/pina-colada.mdc) to handle async state management.
 - Do not write an http request using fetch, axios or similar unless I ask you to.
-1. Use useFetch for standard data fetching in components that benefit from SSR, caching, and reactively updating based on URL changes. 
-2. Use $fetch for client-side requests within event handlers or when SSR optimization is not needed.
-3. Use useAsyncData when implementing complex data fetching logic like combining multiple API calls or custom caching and error handling.
-4. Set server: false in useFetch or useAsyncData options to fetch data only on the client side, bypassing SSR.
-5. Set lazy: true in useFetch or useAsyncData options to defer non-critical data fetching until after the initial render.
+
+Third party libraries
+- use vue-sonnar to add sonnar alerts
 
 Follow the official Nuxt.js and Vue.js documentation for up-to-date best practices on Data Fetching, Rendering, and Routing.
