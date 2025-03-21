@@ -57,7 +57,7 @@ const submit = handleSubmit(async (values) => {
     });
 
     // Navigate to the login page after successful signup
-    router.push('/auth/login')
+    router.push('/')
   } catch (error) {
     console.error(error)
 
