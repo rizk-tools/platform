@@ -4,28 +4,25 @@ import { auth } from "@/lib/auth";
 
 const router = useRouter()
 
-const title = "Sign Up";
-const description = "Create an account to get started.";
-
-useSeoMeta({ title, description });
+useSeoMeta({
+  title: "Log in",
+  description: "Enter your email & password to log in or continue with Google or Facebook.",
+});
 
 const isSubmitting = ref(false)
 
 const { handleSubmit } = useForm({
   validationSchema: toTypedSchema(
     z.object({
-      name: z
-        .string({
-          required_error: "Name is required",
-        })
-        .min(4, "Name must be at least 4 characters"),
       email: z
         .string({
           required_error: "Email is required",
         })
         .email("Email must be a valid email"),
       password: z
-        .string()
+        .string({
+          required_error: "Password is required",
+        })
         .min(6, "Password must be at least 6 characters"),
     })
   ),
@@ -39,27 +36,26 @@ const submit = handleSubmit(async (values) => {
   try {
     isSubmitting.value = true;
 
-    const response = await auth.signUp.email({
+    const response = await auth.signIn.email({
       email: values.email,
-      password: values.password,
-      name: values.name
+      password: values.password
     })
 
     if (response.error) {
       throw new Error(response.error.message)
     }
 
-    useSonner("Account created!", {
-      description: "You have successfully created an account.",
+    useSonner("Logged in successfully!", {
+      description: "You have successfully logged in.",
     });
 
-    // Navigate to the login page after successful signup
+    // Navigate to the home page after successful login
     router.push('/')
   } catch (error) {
     console.error(error)
 
-    useSonner("Error creating account", {
-      description: error instanceof Error ? error.message : "Please try again.",
+    useSonner("Login failed", {
+      description: error instanceof Error ? error.message : "Please check your credentials and try again.",
     });
   } finally {
     isSubmitting.value = false;
@@ -71,30 +67,35 @@ const signInWithGoogle = async () => {
 };
 </script>
 
+
 <template>
   <div class="flex h-screen items-center justify-center">
     <div class="w-full md:w-1/2">
       <div class="mx-auto w-full max-w-[330px] px-5">
-        <h1 class="text-2xl font-bold tracking-tight lg:text-3xl">{{ title }}</h1>
-        <p class="mt-1 text-muted-foreground">{{ description }}</p>
+        <h1 class="text-2xl font-bold tracking-tight lg:text-3xl">Log in</h1>
+        <p class="mt-1 text-muted-foreground">Enter your email & password to log in.</p>
 
         <form class="mt-10" @submit="submit">
           <fieldset :disabled="isSubmitting" class="grid gap-5">
-            <UiVeeInput required label="Name" name="name" placeholder="John Doe" />
             <UiVeeInput required label="Email" type="email" name="email" placeholder="john@example.com" />
             <UiVeeInput required label="Password" type="password" name="password" />
-            <UiButton class="w-full" type="submit" text="Get Started" />
+            <UiButton class="w-full" type="submit" text="Log in" />
             <UiDivider label="OR" />
             <UiButton variant="outline" type="button" @click="signInWithGoogle()">
               <Icon class="size-4" name="logos:google-icon" />
-              <span class="ml-2">Sign up with Google</span>
+              <span class="ml-2">Continue with Google</span>
             </UiButton>
           </fieldset>
         </form>
-        <p class="mt-8 text-sm text-muted-foreground">
-          Already have an account?
-          <NuxtLink class="font-semibold text-primary underline-offset-2 hover:underline" to="/auth/login">Log in
+        <p class="mt-8 text-sm">
+          <NuxtLink class="font-semibold text-primary underline-offset-2 hover:underline" to="/auth/forgot-password">
+            Forgot password?
           </NuxtLink>
+        </p>
+        <p class="mt-4 text-sm text-muted-foreground">
+          Don't have an account?
+          <NuxtLink class="font-semibold text-primary underline-offset-2 hover:underline" to="/auth/signup">Create
+            account</NuxtLink>
         </p>
       </div>
     </div>
