@@ -1,5 +1,5 @@
 ---
-description: Pinia-based state management library for structured, centralized state handling
+description: Pinia colada is a pinia-based state management library for structured, centralized state handling
 globs: 
 alwaysApply: false
 ---

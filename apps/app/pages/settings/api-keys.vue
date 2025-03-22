@@ -16,7 +16,25 @@
     <!-- API Keys List -->
     <div class="rounded-lg border bg-card">
       <div class="p-6">
-        <div v-if="apiKeys.length === 0" class="flex flex-col items-center justify-center py-8 text-center">
+        <div v-if="loading" class="flex flex-col items-center justify-center py-8 text-center">
+          <div class="flex h-20 w-20 items-center justify-center rounded-full bg-muted">
+            <Icon name="lucide:loader" class="size-10 text-muted-foreground animate-spin" />
+          </div>
+          <h3 class="mt-4 text-lg font-medium">Loading API keys...</h3>
+        </div>
+
+        <div v-else-if="errorMsg" class="flex flex-col items-center justify-center py-8 text-center">
+          <div class="flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
+            <Icon name="lucide:alert-triangle" class="size-10 text-destructive" />
+          </div>
+          <h3 class="mt-4 text-lg font-medium">Error loading API keys</h3>
+          <p class="mt-2 text-sm text-muted-foreground max-w-md">{{ errorMsg }}</p>
+          <UiButton variant="outline" class="mt-4" @click="refreshData">
+            Try Again
+          </UiButton>
+        </div>
+
+        <div v-else-if="!apiKeys.length" class="flex flex-col items-center justify-center py-8 text-center">
           <div class="flex h-20 w-20 items-center justify-center rounded-full bg-muted">
             <Icon name="lucide:key" class="size-10 text-muted-foreground" />
           </div>
@@ -40,23 +58,15 @@
               </div>
               <div>
                 <p class="font-medium">{{ key.name }}</p>
-                <p class="text-xs text-muted-foreground">Created {{ key.createdAt }}</p>
+                <p class="text-xs text-muted-foreground">
+                  Created {{ new Date(key.metadata?.createdAt || key.createdAt).toLocaleDateString() }}
+                  <template v-if="key.expiresAt">
+                    · Expires {{ new Date(key.expiresAt).toLocaleDateString() }}
+                  </template>
+                </p>
               </div>
             </div>
             <div class="flex items-center space-x-2">
-              <UiTooltipProvider>
-                <UiTooltip>
-                  <UiTooltipTrigger as-child>
-                    <UiButton variant="ghost" size="icon">
-                      <Icon name="lucide:copy" class="size-4" />
-                    </UiButton>
-                  </UiTooltipTrigger>
-                  <UiTooltipContent>
-                    <p>Copy API Key</p>
-                  </UiTooltipContent>
-                </UiTooltip>
-              </UiTooltipProvider>
-
               <UiDropdownMenu>
                 <UiDropdownMenuTrigger as-child>
                   <UiButton variant="ghost" size="icon">
@@ -64,7 +74,9 @@
                   </UiButton>
                 </UiDropdownMenuTrigger>
                 <UiDropdownMenuContent>
-                  <UiDropdownMenuItem icon="lucide:trash-2" title="Revoke API Key" />
+                  <UiDropdownMenuItem @click="revokeKey(key.id)">
+                    <Icon name="lucide:trash-2" class="mr-2 size-4" /> Revoke API Key
+                  </UiDropdownMenuItem>
                 </UiDropdownMenuContent>
               </UiDropdownMenu>
             </div>
@@ -74,7 +86,7 @@
     </div>
 
     <!-- Create API Key Dialog -->
-    <UiSheetRoot v-model:open="showCreateKeyDialog">
+    <UiSheet v-model:open="showCreateKeyDialog">
       <UiSheetContent class="sm:max-w-md">
         <UiSheetHeader>
           <UiSheetTitle>Create API Key</UiSheetTitle>
@@ -92,53 +104,37 @@
 
           <div class="space-y-2">
             <UiLabel for="api-key-expiry">Expiration</UiLabel>
-            <select id="api-key-expiry"
-              class="form-select h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-              <option value="never">Never expires</option>
-              <option value="30d">30 days</option>
-              <option value="60d">60 days</option>
-              <option value="90d">90 days</option>
-              <option value="180d">6 months</option>
-              <option value="365d">1 year</option>
-            </select>
-          </div>
 
-          <div class="space-y-2">
-            <UiLabel>Permissions</UiLabel>
-            <div class="rounded-lg border p-4 space-y-3">
-              <div class="flex items-center space-x-2">
-                <input id="read-permission" type="checkbox"
-                  class="form-checkbox h-4 w-4 rounded border-primary text-primary focus:ring-primary/20" checked>
-                <label for="read-permission" class="text-sm font-medium">Read</label>
-                <span class="ml-auto text-xs text-muted-foreground">View policy information</span>
-              </div>
+            <UiSelect v-model="expiry">
+              <UiSelectTrigger placeholder="Select an option" />
+              <UiSelectContent>
+                <UiSelectLabel>Expiration</UiSelectLabel>
+                <UiSelectSeparator />
+                <UiSelectGroup>
+                  <UiSelectItem v-for="(option, i) in expiryOptions" :key="i" :value="option.value"
+                    :text="option.label" />
+                </UiSelectGroup>
+              </UiSelectContent>
+            </UiSelect>
 
-              <div class="flex items-center space-x-2">
-                <input id="write-permission" type="checkbox"
-                  class="form-checkbox h-4 w-4 rounded border-primary text-primary focus:ring-primary/20">
-                <label for="write-permission" class="text-sm font-medium">Write</label>
-                <span class="ml-auto text-xs text-muted-foreground">Create and edit policies</span>
-              </div>
 
-              <div class="flex items-center space-x-2">
-                <input id="evaluate-permission" type="checkbox"
-                  class="form-checkbox h-4 w-4 rounded border-primary text-primary focus:ring-primary/20" checked>
-                <label for="evaluate-permission" class="text-sm font-medium">Evaluate</label>
-                <span class="ml-auto text-xs text-muted-foreground">Run policy evaluations</span>
-              </div>
-            </div>
+
+
           </div>
         </div>
 
         <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
           <UiButton variant="outline" @click="showCreateKeyDialog = false">Cancel</UiButton>
-          <UiButton variant="default" @click="createApiKey">Create API Key</UiButton>
+          <UiButton variant="default" :disabled="creatingKey" @click="handleCreateKey">
+            <Icon v-if="creatingKey" name="lucide:loader" class="mr-2 size-4 animate-spin" />
+            Create API Key
+          </UiButton>
         </div>
       </UiSheetContent>
-    </UiSheetRoot>
+    </UiSheet>
 
     <!-- API Key Created Dialog -->
-    <UiSheetRoot v-model:open="showKeyCreatedDialog">
+    <UiSheet v-model:open="showKeyCreatedDialog">
       <UiSheetContent class="sm:max-w-md">
         <UiSheetHeader>
           <UiSheetTitle>API Key Created</UiSheetTitle>
@@ -152,9 +148,9 @@
             <UiLabel>API Key</UiLabel>
             <div class="flex items-center space-x-2">
               <div class="relative flex-1">
-                <UiInput value="rizk_sk_1234567890abcdefghijklmnopqrstuvwxyz" readonly
-                  class="pr-10 font-mono text-sm" />
-                <button class="absolute right-2 top-1/2 -translate-y-1/2" title="Copy to clipboard">
+                <UiInput :value="newApiKey" readonly class="pr-10 font-mono text-sm" />
+                <button class="absolute right-2 top-1/2 -translate-y-1/2" title="Copy to clipboard"
+                  @click="copyToClipboard(newApiKey)">
                   <Icon name="lucide:copy" class="size-4 text-muted-foreground hover:text-foreground" />
                 </button>
               </div>
@@ -169,17 +165,33 @@
           <UiButton variant="default" @click="showKeyCreatedDialog = false">Done</UiButton>
         </div>
       </UiSheetContent>
-    </UiSheetRoot>
+    </UiSheet>
   </div>
+
+
+
 </template>
 
 <script setup lang="ts">
+import { useQuery, useMutation, useQueryCache } from '@pinia/colada';
+import { auth } from '@/lib/auth';
+
+const expiry = ref('never');
+const expiryOptions = ref([
+  { label: 'Never expires', value: 'never' },
+  { label: '30 days', value: '30d' },
+  { label: '60 days', value: '60d' },
+  { label: '90 days', value: '90d' },
+  { label: '180 days', value: '180d' },
+  { label: '365 days', value: '365d' },
+]);
 definePageMeta({
   layout: 'app',
 });
 
 // Set breadcrumbs for this page
 const { $breadcrumbs } = useNuxtApp();
+
 if ($breadcrumbs) {
   $breadcrumbs.value = [
     { label: "Settings", link: "/settings" },
@@ -187,25 +199,127 @@ if ($breadcrumbs) {
   ];
 }
 
-// This is just UI design, implementation will come later
+// Using Pinia Colada for state management
+const queryCache = useQueryCache();
+
+// Query for getting API keys
+const apiKeysQuery = useQuery({
+  key: ['api-keys'],
+  query: async () => {
+    const { data, error } = await auth.apiKey.list();
+
+    if (error) {
+      throw error;
+    }
+
+    return data || [];
+  }
+});
+
+// Create computed properties for easier template access
+const apiKeys = computed(() => apiKeysQuery.data.value || []);
+const loading = computed(() => apiKeysQuery.asyncStatus.value === 'loading');
+const errorMsg = computed(() => apiKeysQuery.error.value?.message || '');
+
+// Function to refresh the data
+function refreshData () {
+  apiKeysQuery.refresh();
+}
+
+// State for UI
 const showCreateKeyDialog = ref(false);
 const showKeyCreatedDialog = ref(false);
 const newKeyName = ref('');
+const newApiKey = ref('');
 
-// Sample data for the UI design
-const apiKeys = ref([
-  {
-    id: '1',
-    name: 'Development Server',
-    value: 'rizk_sk_1234567890abcdefghijklmnopqrstuvwxyz',
-    createdAt: 'April 23, 2024'
+// // Mutation for creating a new API key
+const createKeyMutation = useMutation({
+  mutation: async () => {
+    // Calculate expiration time in seconds
+    let expiresIn = null;
+    if (expiry.value !== 'never') {
+      const days = parseInt(expiry.value.replace('d', ''));
+      expiresIn = days * 24 * 60 * 60; // Convert days to seconds
+    }
+
+    const { data, error } = await auth.apiKey.create({
+      name: newKeyName.value,
+      expiresIn,
+      prefix: 'rizk_'
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  },
+  onSuccess: (data: { key: string }) => {
+    // Store the newly created API key to display to the user
+    newApiKey.value = data.key;
+
+    // Copy the API key to the clipboard
+    copyToClipboard(data.key);
+
+    // Close create dialog and open the created dialog
+    showCreateKeyDialog.value = false;
+    showKeyCreatedDialog.value = true;
+
+    // Invalidate the API keys query to refresh the list
+    queryCache.invalidateQueries({ key: ['api-keys'] });
+  },
+  onError: (error: Error) => {
+    alert(error.message || 'Failed to create API key');
   }
-]);
+});
 
-// Mock function that will be implemented later
-const createApiKey = () => {
-  // This is just for the UI design
-  showCreateKeyDialog.value = false;
-  showKeyCreatedDialog.value = true;
-};
+// Computed property for loading state
+const creatingKey = computed(() => createKeyMutation.asyncStatus.value === 'loading');
+
+// Function to handle creating a new API key
+function handleCreateKey () {
+  createKeyMutation.mutate();
+}
+
+// Mutation for revoking an API key
+const revokeKeyMutation = useMutation({
+  mutation: async (keyId: string) => {
+    const { error } = await auth.apiKey.delete({ keyId });
+
+    if (error) {
+      throw error;
+    }
+
+    return { success: true };
+  },
+  onSuccess: () => {
+    // Invalidate the API keys query to refresh the list
+    queryCache.invalidateQueries({ key: ['api-keys'] });
+  },
+  onError: (error: Error) => {
+    alert(error.message || 'Failed to revoke API key');
+  }
+});
+
+// Function to revoke a key
+function revokeKey (keyId: string) {
+  revokeKeyMutation.mutate(keyId);
+}
+
+// Function to copy API key to clipboard
+function copyToClipboard (text: string) {
+  navigator.clipboard.writeText(text)
+    .then(() => {
+      useSonner.success("API Key copied to clipboard", {
+        description: "You can now paste it into your application.",
+      });
+    })
+    .catch((error: Error) => {
+      useSonner.error("Failed to copy API Key", {
+        description: "Please try again.",
+      });
+
+      console.error('Failed to copy text: ', error);
+    });
+}
 </script>

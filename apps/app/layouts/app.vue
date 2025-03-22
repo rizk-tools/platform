@@ -1,5 +1,8 @@
 <template>
   <UiSidebarProvider v-slot="{ isMobile, state }">
+    <UiVueSonner />
+
+
     <!-- App Sidebar -->
     <UiSidebar collapsible="icon">
       <!-- Team switcher -->
@@ -249,7 +252,7 @@ const data = {
       items: [
         {
           title: "Overview",
-          url: "#",
+          url: "/",
         },
         {
           title: "Analytics",
