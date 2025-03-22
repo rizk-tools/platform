@@ -54,6 +54,7 @@ Nuxt-specific Guidelines
 - Use useFetch and useAsyncData for data fetching.
 - Implement SEO best practices using Nuxt's useHead and useSeoMeta.
 - Use auto import for components and composables.
+- Use the auto import naming for components, for example, if a component is located on components/ui/form/input.vue, use the component as <UiFormInput />
 
 Vue 3 and Composition API Best Practices
 - Use <script setup> syntax for concise component definitions.

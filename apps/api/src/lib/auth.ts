@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { apiKey, organization } from "better-auth/plugins"
 import { db } from "@/db";
-import { user, session, account, verification, apikey } from "@/db/schema";
+import { user, session, account, verification, apikey, organization as organizationTable, member, invitation } from "@/db/schema";
 
 export const auth = betterAuth({
   basePath: "/auth",
@@ -13,7 +13,10 @@ export const auth = betterAuth({
       session,
       account,
       verification,
-      apikey
+      apikey,
+      organization: organizationTable,
+      member,
+      invitation
     }
   }),
   emailAndPassword: {

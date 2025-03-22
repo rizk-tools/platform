@@ -15,13 +15,13 @@
                   class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-0">
                   <div
                     class="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                    <Icon mode="svg" :name="activeTeam.logo" class="size-4" />
+                    <Icon mode="svg" :name="activeTeam.logo || 'lucide:shield'" class="size-4" />
                   </div>
                   <div class="grid flex-1 text-left text-sm leading-tight">
                     <span class="truncate font-semibold">
                       {{ activeTeam.name }}
                     </span>
-                    <span class="truncate text-xs">{{ activeTeam.plan }}</span>
+                    <span class="truncate text-xs">{{ activeTeam.slug }}</span>
                   </div>
                   <Icon mode="svg" name="lucide:chevrons-up-down" class="ml-auto" />
                 </UiSidebarMenuButton>
@@ -31,13 +31,16 @@
                 <UiDropdownMenuLabel class="text-xs text-muted-foreground">
                   Teams
                 </UiDropdownMenuLabel>
-                <template v-for="(team, index) in data.teams" :key="index">
+                <template v-for="(org, index) in organizations" :key="index">
                   <UiDropdownMenuItem class="cursor-pointer gap-2 p-2"
-                    :class="[team.name == activeTeam.name && 'bg-muted']" @click="activeTeam = team">
-                    <div class="flex size-6 items-center justify-center rounded-sm border">
-                      <Icon mode="svg" :name="team.logo" class="size-4 shrink-0" />
+                    :class="[org.name == activeTeam.name && 'bg-muted']" @click="activeTeam = org">
+                    <div v-if="org.logo" class="flex size-6 items-center justify-center rounded-sm border">
+                      <Icon mode="svg" :name="org.logo" class="size-4 shrink-0" />
                     </div>
-                    {{ team.name }}
+                    <div v-else class="flex size-6 items-center justify-center rounded-sm border">
+                      <Icon mode="svg" name="lucide:shield" class="size-4 shrink-0" />
+                    </div>
+                    {{ org.name }}
                     <UiDropdownMenuShortcut>⌘{{ index + 1 }}</UiDropdownMenuShortcut>
                   </UiDropdownMenuItem>
                 </template>
@@ -190,11 +193,7 @@
         <UiBreadcrumbs :items="breadcrumbItems" />
       </UiNavbar>
       <div class="grid auto-rows-min gap-4 p-4 md:grid-cols-3">
-
-
         <slot />
-
-
       </div>
     </UiSidebarInset>
   </UiSidebarProvider>
@@ -211,7 +210,20 @@ const breadcrumbItems = $breadcrumbs || ref([
   { label: "Compliance Rules", link: "#" },
 ]);
 
+const { data: organizations } = await auth.organization.list()
 const { data: session } = await auth.getSession();
+
+const activeTeam = computed(() => {
+  if (!organizations) {
+    return {
+      name: "Acme Inc",
+      logo: "lucide:shield",
+      slug: "acme-inc",
+    };
+  }
+
+  return organizations[0];
+});
 
 if (!session) {
   router.push('/auth/login');
@@ -372,7 +384,6 @@ const data = {
   ],
 };
 
-const activeTeam = ref(data.teams[1]);
 const activeProject = ref(data.projects[0]);
 
 interface Project {

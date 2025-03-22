@@ -1,42 +1,38 @@
 import { auth } from "@/lib/auth";
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  // Get current session
+  const authPaths = [
+    '/settings'
+  ];
+
+  const authExcludedPaths = [
+    '/auth/login',
+    '/auth/signup',
+    '/auth/forgot-password',
+    '/auth/reset-password',
+  ];
+
+  // Check if the user is authenticated
   const { data: session } = await auth.getSession();
+  const isAuthenticated = !!session;
 
-  // Define auth pages (login, register, etc.)
-  const isAuthRoute = to.path.startsWith('/auth/');
-  const isOnboardingRoute = to.path === '/onboarding';
-
-  // If on auth page and logged in, redirect to home
-  if (isAuthRoute && !isOnboardingRoute && session) {
-    return navigateTo('/');
-  }
-
-  // If on protected page and not logged in, redirect to login
-  if (!isAuthRoute && !session) {
+  // If path requires authentication and user is not authenticated
+  if (authPaths.some(path => to.path.startsWith(path)) && !isAuthenticated) {
     return navigateTo('/auth/login');
   }
 
-  // Exempt the onboarding route from further checks
-  if (isOnboardingRoute) {
-    return;
+  // If user is authenticated and tries to access auth pages, redirect to home
+  if (authExcludedPaths.some(path => to.path.startsWith(path)) && isAuthenticated) {
+    return navigateTo('/');
   }
 
-  // If user is logged in on a protected route, check for organizations
-  if (session && !isAuthRoute) {
-    try {
-      // Try to access session.session.activeOrganizationId if it exists
-      // This structure is based on better-auth's session data shape
-      const activeOrgId = session.session?.activeOrganizationId;
+  const organizations = await auth.organization.list()
 
-      if (!activeOrgId) {
-        // No active organization, redirect to onboarding
-        return navigateTo('/onboarding');
-      }
-    } catch (error) {
-      console.error("Error checking active organization:", error);
-      // On error, let the request continue (don't disrupt normal flow)
-    }
+  // Avoid redirect loop by checking if the current path is not already '/onboarding'
+  if (organizations.data?.length === 0 && to.path !== '/onboarding') {
+    return navigateTo('/onboarding');
   }
+
+  // Continue to the requested page
+  return;
 });
