@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { apiKey } from "better-auth/plugins"
+import { apiKey, organization } from "better-auth/plugins"
 import { db } from "@/db";
 import { user, session, account, verification, apikey } from "@/db/schema";
 
@@ -21,5 +21,8 @@ export const auth = betterAuth({
     minPasswordLength: 6
   },
   trustedOrigins: ["http://localhost:3000"],
-  plugins: [apiKey()]
+  plugins: [
+    apiKey(),
+    organization()
+  ]
 });
