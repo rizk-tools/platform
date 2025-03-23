@@ -1,0 +1,29 @@
+{
+  "name": "@rizk/emails",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@vitejs/plugin-vue": "^5.2.3",
+    "@vue-email/components": "^0.0.21",
+    "@vue-email/render": "^0.0.9",
+    "@vue-email/tailwind": "^0.2.0",
+    "nuxt": "^3.16.1",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "tailwindcss": "3"
+  }
+}
