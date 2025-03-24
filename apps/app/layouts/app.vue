@@ -30,6 +30,22 @@
       </UiDialogContent>
     </UiDialog>
 
+    <!-- Switch Project Confirmation Dialog -->
+    <UiDialog v-model:open="showSwitchProjectDialog">
+      <UiDialogContent class="sm:max-w-[425px]">
+        <UiDialogHeader>
+          <UiDialogTitle>Switch Project</UiDialogTitle>
+          <UiDialogDescription>
+            Are you sure you want to switch to a different project?
+          </UiDialogDescription>
+        </UiDialogHeader>
+        <UiDialogFooter>
+          <UiButton type="button" variant="outline" @click="showSwitchProjectDialog = false">Cancel</UiButton>
+          <UiButton type="button" @click="confirmSwitchProject">Switch Project</UiButton>
+        </UiDialogFooter>
+      </UiDialogContent>
+    </UiDialog>
+
     <!-- App Sidebar -->
     <UiSidebar collapsible="icon">
       <!-- Team switcher -->
@@ -103,7 +119,7 @@
             <UiSidebarMenuItem v-for="item in projects" :key="item.name">
               <UiSidebarMenuButton as-child
                 :class="[activeProjectId === item.id && 'bg-sidebar-accent text-sidebar-accent-foreground']"
-                @click="setActiveProject(item)">
+                @click="handleProjectClick(item)">
                 <div class="flex items-center">
                   <Icon mode="svg" :name="item.icon" />
                   <span>{{ item.name }}</span>
@@ -380,10 +396,12 @@ const activeProject = computed(() =>
 
 // Dialog state
 const showCreateProjectDialog = ref(false);
+const showSwitchProjectDialog = ref(false);
 const newProject = ref({
   name: '',
   description: '',
 });
+const pendingProject = ref<typeof projects.value[0] | null>(null);
 
 // Set active project and update breadcrumbs
 function setActiveProject (project: typeof projects.value[0]) {
@@ -394,6 +412,29 @@ function setActiveProject (project: typeof projects.value[0]) {
     { label: project.name, link: project.url || "#" },
     { label: "Overview", link: "#" },
   ];
+}
+
+// Handle project click to show confirmation dialog
+function handleProjectClick (project: typeof projects.value[0]) {
+  // If same project, do nothing
+  if (activeProjectId.value === project.id) {
+    return;
+  }
+
+  // Store pending project
+  pendingProject.value = project;
+
+  // Show confirmation dialog
+  showSwitchProjectDialog.value = true;
+}
+
+// Confirm project switch after user confirmation
+function confirmSwitchProject () {
+  if (pendingProject.value) {
+    setActiveProject(pendingProject.value);
+    pendingProject.value = null;
+    showSwitchProjectDialog.value = false;
+  }
 }
 
 async function handleCreateProject () {
