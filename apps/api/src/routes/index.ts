@@ -6,6 +6,7 @@ import { authMiddleware } from "@/middleware/auth";
 import { cors } from "hono/cors";
 
 import policies from "@/routes/policies/policies.index";
+import projects from "@/routes/projects/projects.index";
 
 export function registerRoutes (app: AppOpenAPI) {
   return app
@@ -23,7 +24,8 @@ export function registerRoutes (app: AppOpenAPI) {
     })
     // Apply auth middleware to all other routes
     .use(authMiddleware)
-    .route("/", policies);
+    .route("/", policies)
+    .route("/", projects);
 }
 
 export const router = registerRoutes(

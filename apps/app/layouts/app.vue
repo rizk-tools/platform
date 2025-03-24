@@ -2,6 +2,33 @@
   <UiSidebarProvider v-slot="{ isMobile, state }">
     <UiVueSonner />
 
+    <!-- Create Project Dialog -->
+    <UiDialog v-model:open="showCreateProjectDialog">
+      <UiDialogContent class="sm:max-w-[425px]">
+        <UiDialogHeader>
+          <UiDialogTitle>Create Project</UiDialogTitle>
+          <UiDialogDescription>
+            Add a new project to your workspace. Projects help you organize your AI compliance policies.
+          </UiDialogDescription>
+        </UiDialogHeader>
+        <form @submit.prevent="handleCreateProject">
+          <div class="grid gap-4 py-4">
+            <div class="grid gap-2">
+              <UiLabel for="name" required>Name</UiLabel>
+              <UiInput id="name" v-model="newProject.name" placeholder="Enter project name" required />
+            </div>
+            <div class="grid gap-2">
+              <UiLabel for="description">Description</UiLabel>
+              <UiTextarea id="description" v-model="newProject.description" placeholder="Enter project description" />
+            </div>
+          </div>
+          <UiDialogFooter>
+            <UiButton type="button" variant="outline" @click="showCreateProjectDialog = false">Cancel</UiButton>
+            <UiButton type="submit" :disabled="!newProject.name">Create Project</UiButton>
+          </UiDialogFooter>
+        </form>
+      </UiDialogContent>
+    </UiDialog>
 
     <!-- App Sidebar -->
     <UiSidebar collapsible="icon">
@@ -73,9 +100,9 @@
         <UiSidebarGroup>
           <UiSidebarGroupLabel label="Projects" />
           <UiSidebarMenu>
-            <UiSidebarMenuItem v-for="item in data.projects" :key="item.name">
+            <UiSidebarMenuItem v-for="item in projects" :key="item.name">
               <UiSidebarMenuButton as-child
-                :class="[item.name === activeProject.name && 'bg-sidebar-accent text-sidebar-accent-foreground']"
+                :class="[activeProjectId === item.id && 'bg-sidebar-accent text-sidebar-accent-foreground']"
                 @click="setActiveProject(item)">
                 <div class="flex items-center">
                   <Icon mode="svg" :name="item.icon" />
@@ -85,7 +112,7 @@
             </UiSidebarMenuItem>
 
             <UiSidebarMenuItem>
-              <UiSidebarMenuButton class="text-sidebar-foreground/70" as-child @click="createProject">
+              <UiSidebarMenuButton class="text-sidebar-foreground/70" as-child @click="showCreateProjectDialog = true">
                 <div class="flex items-center">
                   <Icon mode="svg" name="lucide:plus-circle" />
                   <span>New Project</span>
@@ -96,10 +123,10 @@
         </UiSidebarGroup>
 
         <!-- Project Navigation -->
-        <UiSidebarGroup>
+        <UiSidebarGroup v-if="activeProject">
           <UiSidebarGroupLabel :label="activeProject.name" />
           <UiSidebarMenu>
-            <UiCollapsible v-for="(item, index) in data.navMain" :key="index" v-slot="{ open }" as-child
+            <UiCollapsible v-for="(item, index) in navItems" :key="index" v-slot="{ open }" as-child
               :default-open="item.isActive">
               <UiSidebarMenuItem>
                 <UiCollapsibleTrigger as-child>
@@ -137,14 +164,14 @@
                 <UiSidebarMenuButton size="lg"
                   class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                   <UiAvatar class="size-8 rounded-lg">
-                    <UiAvatarImage :src="data.user.avatar" :alt="data.user.name" />
-                    <UiAvatarFallback class="rounded-lg">{{ data.user.name ? data.user.name.substring(0,
+                    <UiAvatarImage :src="userData.avatar" :alt="userData.name" />
+                    <UiAvatarFallback class="rounded-lg">{{ userData.name ? userData.name.substring(0,
                       2).toUpperCase() :
                       'U' }}</UiAvatarFallback>
                   </UiAvatar>
                   <div class="grid flex-1 text-left text-sm leading-tight">
-                    <span class="truncate font-semibold">{{ data.user.name }}</span>
-                    <span class="truncate text-xs">{{ data.user.email }}</span>
+                    <span class="truncate font-semibold">{{ userData.name }}</span>
+                    <span class="truncate text-xs">{{ userData.email }}</span>
                   </div>
                   <Icon name="lucide:chevrons-up-down" class="ml-auto size-4" />
                 </UiSidebarMenuButton>
@@ -154,14 +181,14 @@
                 <UiDropdownMenuLabel class="p-0 font-normal">
                   <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                     <UiAvatar class="size-8 rounded-lg">
-                      <UiAvatarImage :src="data.user.avatar" :alt="data.user.name" />
-                      <UiAvatarFallback class="rounded-lg">{{ data.user.name ? data.user.name.substring(0,
+                      <UiAvatarImage :src="userData.avatar" :alt="userData.name" />
+                      <UiAvatarFallback class="rounded-lg">{{ userData.name ? userData.name.substring(0,
                         2).toUpperCase() :
                         'U' }}</UiAvatarFallback>
                     </UiAvatar>
                     <div class="grid flex-1 text-left text-sm leading-tight">
-                      <span class="truncate font-semibold">{{ data.user.name }}</span>
-                      <span class="truncate text-xs">{{ data.user.email }}</span>
+                      <span class="truncate font-semibold">{{ userData.name }}</span>
+                      <span class="truncate text-xs">{{ userData.email }}</span>
                     </div>
                   </div>
                 </UiDropdownMenuLabel>
@@ -203,19 +230,50 @@
 import { auth } from "@/lib/auth";
 
 const router = useRouter();
+const client = useApiClient();
+
+// Define interfaces
+interface Crumb {
+  label: string;
+  link: string;
+}
+
+interface Project {
+  id: string;
+  name: string;
+  url?: string;
+  icon: string;
+  description?: string | null;
+  organizationId?: string | null;
+}
+
+interface NavItem {
+  title: string;
+  url: string;
+  icon: string;
+  isActive?: boolean;
+  items: {
+    title: string;
+    url: string;
+  }[];
+}
 
 // Breadcrumb items from plugin
 const { $breadcrumbs } = useNuxtApp();
-const breadcrumbItems = $breadcrumbs || ref([
-  { label: "Compliance Rules", link: "#" },
-]);
+const breadcrumbItems = ref<Crumb[]>(
+  $breadcrumbs && Array.isArray($breadcrumbs) ? $breadcrumbs : [
+    { label: "Compliance Rules", link: "#" },
+  ]
+);
 
-const { data: organizations } = await auth.organization.list()
+// Auth and organization data
+const { data: organizations } = await auth.organization.list();
 const { data: session } = await auth.getSession();
 
 const activeTeam = computed(() => {
   if (!organizations) {
     return {
+      id: "1",
       name: "Acme Inc",
       logo: "lucide:shield",
       slug: "acme-inc",
@@ -227,194 +285,156 @@ const activeTeam = computed(() => {
 
 if (!session) {
   router.push('/auth/login');
-
   throw new Error("No session found");
 }
 
-
-const data = {
-  user: {
-    name: session.user.name,
-    email: session.user.email,
-    avatar: session.user.image || "",
-  },
-  teams: [
-    {
-      name: "Acme Inc",
-      logo: "lucide:shield",
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: "lucide:shield-check",
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: "lucide:shield-alert",
-      plan: "Free",
-    },
-  ],
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "#",
-      icon: "lucide:layout-dashboard",
-      isActive: true,
-      items: [
-        {
-          title: "Overview",
-          url: "/",
-        },
-        {
-          title: "Analytics",
-          url: "#",
-        },
-        {
-          title: "Reports",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Policies",
-      url: "#",
-      icon: "lucide:file-lock",
-      items: [
-        {
-          title: "All Policies",
-          url: "#",
-        },
-        {
-          title: "Create Policy",
-          url: "#",
-        },
-        {
-          title: "Templates",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Monitoring",
-      url: "#",
-      icon: "lucide:activity",
-      items: [
-        {
-          title: "AI Responses",
-          url: "#",
-        },
-        {
-          title: "Compliance Logs",
-          url: "#",
-        },
-        {
-          title: "Violations",
-          url: "#",
-        },
-        {
-          title: "Alerts",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: "lucide:book-open",
-      items: [
-        {
-          title: "Getting Started",
-          url: "#",
-        },
-        {
-          title: "SDK Integration",
-          url: "#",
-        },
-        {
-          title: "Policy Writing",
-          url: "#",
-        },
-        {
-          title: "Compliance Frameworks",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: "lucide:settings-2",
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "API Keys",
-          url: "/settings/api-keys",
-        },
-      ],
-    },
-  ],
-  projects: [
-    {
-      name: "Customer Service AI",
-      url: "#",
-      icon: "lucide:message-circle",
-    },
-    {
-      name: "HR Screening Bot",
-      url: "#",
-      icon: "lucide:users",
-    },
-    {
-      name: "Financial Advisor AI",
-      url: "#",
-      icon: "lucide:landmark",
-    },
-  ],
+// User data 
+const userData = {
+  name: session.user.name,
+  email: session.user.email,
+  avatar: session.user.image || "",
 };
 
-const activeProject = ref(data.projects[0]);
+// Navigation items
+const navItems: NavItem[] = [
+  {
+    title: "Dashboard",
+    url: "#",
+    icon: "lucide:layout-dashboard",
+    isActive: true,
+    items: [
+      { title: "Overview", url: "/" },
+      { title: "Analytics", url: "#" },
+      { title: "Reports", url: "#" },
+    ],
+  },
+  {
+    title: "Policies",
+    url: "#",
+    icon: "lucide:file-lock",
+    items: [
+      { title: "All Policies", url: "#" },
+      { title: "Create Policy", url: "#" },
+      { title: "Templates", url: "#" },
+    ],
+  },
+  {
+    title: "Monitoring",
+    url: "#",
+    icon: "lucide:activity",
+    items: [
+      { title: "AI Responses", url: "#" },
+      { title: "Compliance Logs", url: "#" },
+      { title: "Violations", url: "#" },
+      { title: "Alerts", url: "#" },
+    ],
+  },
+  {
+    title: "Documentation",
+    url: "#",
+    icon: "lucide:book-open",
+    items: [
+      { title: "Getting Started", url: "#" },
+      { title: "SDK Integration", url: "#" },
+      { title: "Policy Writing", url: "#" },
+      { title: "Compliance Frameworks", url: "#" },
+    ],
+  },
+  {
+    title: "Settings",
+    url: "#",
+    icon: "lucide:settings-2",
+    items: [
+      { title: "General", url: "#" },
+      { title: "Team", url: "#" },
+      { title: "Billing", url: "#" },
+      { title: "API Keys", url: "/settings/api-keys" },
+    ],
+  },
+];
 
-interface Project {
-  name: string;
-  url: string;
-  icon: string;
-}
+// Projects state
+const projects = ref<Project[]>([]);
+const activeProjectId = ref<string | null>(null);
+const activeProject = computed(() =>
+  projects.value.find(p => p.id === activeProjectId.value) || null
+);
+
+// Dialog state
+const showCreateProjectDialog = ref(false);
+const newProject = ref({
+  name: '',
+  description: '',
+});
 
 // Set active project and update breadcrumbs
 function setActiveProject (project: Project) {
-  activeProject.value = project;
+  activeProjectId.value = project.id;
+
   // Update breadcrumbs to reflect current project context
   breadcrumbItems.value = [
-    { label: project.name, link: project.url },
+    { label: project.name, link: project.url || "#" },
     { label: "Overview", link: "#" },
   ];
 }
 
-function createProject () {
-  console.log("createProject");
-}
+async function handleCreateProject () {
+  try {
+    // Create project through API
+    const response = await client.api.projects.$post({
+      json: {
+        name: newProject.value.name,
+        description: newProject.value.description,
+        organizationId: activeTeam.value.id,
+      }
+    });
 
+    const apiProject = await response.json();
+
+    if (!apiProject.id) {
+      throw new Error("Failed to create project");
+    }
+
+    // Add to local projects list
+    const createdProject: Project = {
+      id: apiProject.id,
+      name: newProject.value.name,
+      url: "#",
+      icon: "lucide:folder",
+      description: newProject.value.description,
+      organizationId: activeTeam.value.id
+    };
+
+    projects.value.push(createdProject);
+
+    // Set the newly created project as active
+    setActiveProject(createdProject);
+
+    // Reset form and close dialog
+    newProject.value = {
+      name: '',
+      description: '',
+    };
+
+    showCreateProjectDialog.value = false;
+
+    useSonner.success("Project created", {
+      description: `${createdProject.name} has been created successfully.`,
+    });
+  } catch (error) {
+    console.error("Error creating project:", error);
+    useSonner.error("Failed to create project", {
+      description: "There was an error creating your project. Please try again.",
+    });
+  }
+}
 
 async function handleSignOut () {
   try {
     await auth.signOut();
-
     useSonner.success("Signed out successfully", {
       description: "You have been signed out of your account.",
     });
-    // Redirect to login page
     router.push('/auth/login');
   } catch (error) {
     console.error("Error signing out:", error);
@@ -422,7 +442,48 @@ async function handleSignOut () {
       description: "There was an error signing out. Please try again.",
     });
   }
-};
+}
 
 useSeoMeta({ title: "Rizk - AI Compliance Platform" });
+
+// Fetch projects on mount
+onMounted(async () => {
+  try {
+    const response = await client.api.projects.$get();
+    const apiProjects = await response.json();
+
+    if (!Array.isArray(apiProjects)) {
+      throw new Error("Invalid projects data");
+    }
+
+    // Transform API projects to match the expected format
+    projects.value = apiProjects.map((p: {
+      id: string;
+      name: string;
+      description: string | null;
+      organizationId: string | null;
+      createdAt?: string | null;
+      updatedAt?: string | null;
+      metadata?: unknown;
+      createdById?: string;
+    }) => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      url: "#",
+      icon: "lucide:folder",
+      organizationId: p.organizationId
+    }));
+
+    // Set the first project as active if one exists
+    if (projects.value.length > 0) {
+      activeProjectId.value = projects.value[0].id;
+    }
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    useSonner.error("Failed to load projects", {
+      description: "There was an error loading your projects. Please refresh the page.",
+    });
+  }
+});
 </script>

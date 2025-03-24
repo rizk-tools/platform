@@ -73,6 +73,7 @@ export const policyRelations = relations(policiesTable, ({ one, many }) => ({
   }),
   policyRules: many(policyRulesTable),
   deployments: many(policyDeploymentsTable),
+  projects: many(projectPoliciesTable)
 }));
 
 export const policyRulesTable = pgTable("policy_rules", {
@@ -302,3 +303,45 @@ export const invitation = pgTable("invitation", {
   expiresAt: timestamp('expires_at').notNull(),
   inviterId: text('inviter_id').notNull().references(() => user.id, { onDelete: 'cascade' })
 });
+
+export const projectsTable = pgTable("projects", {
+  id: uuid().primaryKey().defaultRandom(),
+  name: varchar({ length: 255 }).notNull(),
+  description: text(),
+  organizationId: text().references(() => organization.id, { onDelete: 'cascade' }),
+  createdById: text().notNull().references(() => user.id),
+  metadata: jsonb(),
+  createdAt: timestamp().defaultNow(),
+  updatedAt: timestamp().defaultNow()
+});
+
+export const projectRelations = relations(projectsTable, ({ one, many }) => ({
+  organization: one(organization, {
+    fields: [projectsTable.organizationId],
+    references: [organization.id],
+  }),
+  createdBy: one(user, {
+    fields: [projectsTable.createdById],
+    references: [user.id],
+  }),
+  policies: many(projectPoliciesTable)
+}));
+
+// Join table for projects and policies (many-to-many)
+export const projectPoliciesTable = pgTable("project_policies", {
+  projectId: uuid().notNull().references(() => projectsTable.id, { onDelete: "cascade" }),
+  policyId: uuid().notNull().references(() => policiesTable.id, { onDelete: "cascade" }),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.projectId, t.policyId] }),
+}));
+
+export const projectPolicyRelations = relations(projectPoliciesTable, ({ one }) => ({
+  project: one(projectsTable, {
+    fields: [projectPoliciesTable.projectId],
+    references: [projectsTable.id],
+  }),
+  policy: one(policiesTable, {
+    fields: [projectPoliciesTable.policyId],
+    references: [policiesTable.id],
+  }),
+}));
