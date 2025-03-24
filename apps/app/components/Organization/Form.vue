@@ -47,6 +47,8 @@ const errors = ref({
 
 const isLoading = ref(false);
 
+const client = useApiClient();
+
 const validateForm = () => {
   errors.value = {
     name: '',
@@ -77,10 +79,18 @@ const createOrganization = async () => {
   isLoading.value = true;
 
   try {
-    await auth.organization.create({
+    const { data } = await auth.organization.create({
       name: form.value.name,
       slug: form.value.slug
     });
+
+    await client.api.projects.$post({
+      json: {
+        name: "Example Project",
+        slug: "example-project",
+        organizationId: data.id
+      }
+    })
 
     emit('next-step');
   } catch (error) {
