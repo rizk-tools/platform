@@ -23,14 +23,14 @@
             </UiSelectContent>
           </UiSelect>
         </div>
-        <UiButton v-if="index > 0" variant="ghost" class="!p-2" @click="removeInvitee(index)">
-          <span class="i-heroicons-trash h-5 w-5 text-red-500" />
+        <UiButton v-if="invitees.length > 1" variant="ghost" class="!p-2" @click="removeInvitee(index)">
+          <Icon name="lucide:trash" class="h-5 w-5 text-red-500" />
         </UiButton>
       </div>
 
       <div>
         <UiButton variant="outline" class="w-full" @click="addInvitee">
-          <span class="i-heroicons-plus h-4 w-4 mr-2" />
+          <Icon name="lucide:plus" class="h-4 w-4 mr-2" />
           Add another
         </UiButton>
       </div>

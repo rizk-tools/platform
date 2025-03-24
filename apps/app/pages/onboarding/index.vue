@@ -16,6 +16,9 @@
 </template>
 
 <script setup>
+// import { auth } from '@/lib/auth';
+
+// const { session } = auth.useSession();
 const router = useRouter();
 const currentStep = ref(1);
 
@@ -23,7 +26,13 @@ const goToStep = (step) => {
   currentStep.value = step;
 };
 
-const completeOnboarding = () => {
+const completeOnboarding = async () => {
+  // await auth.sendVerificationEmail({
+  //   email: session.data.user.email,
+  //   name: session.data.user.name,
+  //   callbackURL: 'http://localhost:3000/onboarding'
+  // });
+
   router.push('/');
 };
 </script>

@@ -11,13 +11,7 @@ import {
   Section,
   Text,
 } from '@vue-email/components'
-
-interface WelcomeProps {
-  email: string
-  name?: string
-  url: string
-  token: string
-}
+import type { WelcomeProps } from '../../types'
 
 defineProps<WelcomeProps>()
 </script>

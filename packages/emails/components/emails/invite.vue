@@ -11,14 +11,7 @@ import {
   Section,
   Text,
 } from '@vue-email/components'
-
-interface InviteProps {
-  email: string
-  invitedByUsername: string
-  invitedByEmail: string
-  teamName: string
-  inviteLink: string
-}
+import type { InviteProps } from '../../types'
 
 defineProps<InviteProps>()
 </script>

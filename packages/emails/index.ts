@@ -1,15 +1,7 @@
-const modules = import.meta.glob('./components/emails/*.vue', { eager: true });
+import type { WelcomeProps, InviteProps } from './types';
 
-const components: Record<string, any> = {};
+const welcome = (await import('./components/emails/welcome.vue')).default;
+const invite = (await import('./components/emails/invite.vue')).default;
 
-for (const path in modules) {
-  const componentName = path
-    .split('/')
-    .pop()!
-    .replace('.vue', '');
-
-  components[componentName] = (modules[path] as any).default;
-}
-
-export const welcome = components.welcome;
-export const invite = components.invite;
+export { welcome, invite };
+export type { WelcomeProps, InviteProps };

@@ -28,9 +28,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const organizations = await auth.organization.list()
 
+
+
   // Avoid redirect loop by checking if the current path is not already '/onboarding'
   if (organizations.data?.length === 0 && to.path !== '/onboarding') {
     return navigateTo('/onboarding');
+  }
+
+  if (to.path === '/onboarding' && (organizations.data?.length ?? 0) > 0) {
+    return navigateTo('/');
   }
 
   // Continue to the requested page

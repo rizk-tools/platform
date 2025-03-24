@@ -32,12 +32,16 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: 6,
     sendVerificationEmail: async ({ user, url, token }: SendVerificationEmailProps, request: any) => {
+      console.log("Sending verification email to", user.email);
+
       const html = await render(welcome, {
         email: user.email,
         name: user.name,
         url,
         token
       })
+
+      console.log("HTML", html);
 
       await sendEmail(user.email, "Verify your email address", html);
     },
