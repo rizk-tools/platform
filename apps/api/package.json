@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@hono/zod-openapi": "^0.19.2",
+    "@rizk/emails": "workspace:*",
     "better-auth": "^1.2.4",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.40.1",

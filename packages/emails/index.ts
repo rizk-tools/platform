@@ -1,4 +1,4 @@
-const modules = import.meta.glob('./pages/*.vue', { eager: true });
+const modules = import.meta.glob('./components/emails/*.vue', { eager: true });
 
 const components: Record<string, any> = {};
 
@@ -11,4 +11,5 @@ for (const path in modules) {
   components[componentName] = (modules[path] as any).default;
 }
 
-export default components;
+export const welcome = components.welcome;
+export const invite = components.invite;

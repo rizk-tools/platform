@@ -9,5 +9,10 @@
         "./src/*"
       ]
     }
-  }
+  },
+  "references": [
+    {
+      "path": "../../packages/emails"
+    }
+  ]
 }
