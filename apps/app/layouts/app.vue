@@ -228,6 +228,7 @@
 
 <script lang="ts" setup>
 import { auth } from "@/lib/auth";
+import { useQuery } from '@pinia/colada';
 
 const router = useRouter();
 const client = useApiClient();
@@ -236,15 +237,6 @@ const client = useApiClient();
 interface Crumb {
   label: string;
   link: string;
-}
-
-interface Project {
-  id: string;
-  name: string;
-  url?: string;
-  icon: string;
-  description?: string | null;
-  organizationId?: string | null;
 }
 
 interface NavItem {
@@ -353,9 +345,35 @@ const navItems: NavItem[] = [
   },
 ];
 
-// Projects state
-const projects = ref<Project[]>([]);
+// Projects state using Pinia Colada
 const activeProjectId = ref<string | null>(null);
+
+// Load projects using Pinia Colada
+const projectsQuery = useQuery({
+  key: ['projects'],
+  query: async () => {
+    const response = await client.api.projects.$get();
+    const apiProjects = await response.json();
+
+    if (!Array.isArray(apiProjects)) {
+      throw new Error("Invalid projects data");
+    }
+
+    return apiProjects.map(p => ({
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      url: "#",
+      icon: "lucide:folder",
+      organizationId: p.organizationId
+    }));
+  }
+});
+
+// Create computed properties for easier template access
+const projects = computed(() => projectsQuery.data.value || []);
+
+// Project computed from active ID
 const activeProject = computed(() =>
   projects.value.find(p => p.id === activeProjectId.value) || null
 );
@@ -368,7 +386,7 @@ const newProject = ref({
 });
 
 // Set active project and update breadcrumbs
-function setActiveProject (project: Project) {
+function setActiveProject (project: typeof projects.value[0]) {
   activeProjectId.value = project.id;
 
   // Update breadcrumbs to reflect current project context
@@ -391,12 +409,13 @@ async function handleCreateProject () {
 
     const apiProject = await response.json();
 
-    if (!apiProject.id) {
+    // Type guard for error response
+    if ('error' in apiProject) {
       throw new Error("Failed to create project");
     }
 
     // Add to local projects list
-    const createdProject: Project = {
+    const createdProject = {
       id: apiProject.id,
       name: newProject.value.name,
       url: "#",
@@ -405,7 +424,8 @@ async function handleCreateProject () {
       organizationId: activeTeam.value.id
     };
 
-    projects.value.push(createdProject);
+    // Refresh the projects query
+    projectsQuery.refresh();
 
     // Set the newly created project as active
     setActiveProject(createdProject);
@@ -446,44 +466,10 @@ async function handleSignOut () {
 
 useSeoMeta({ title: "Rizk - AI Compliance Platform" });
 
-// Fetch projects on mount
-onMounted(async () => {
-  try {
-    const response = await client.api.projects.$get();
-    const apiProjects = await response.json();
-
-    if (!Array.isArray(apiProjects)) {
-      throw new Error("Invalid projects data");
-    }
-
-    // Transform API projects to match the expected format
-    projects.value = apiProjects.map((p: {
-      id: string;
-      name: string;
-      description: string | null;
-      organizationId: string | null;
-      createdAt?: string | null;
-      updatedAt?: string | null;
-      metadata?: unknown;
-      createdById?: string;
-    }) => ({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      url: "#",
-      icon: "lucide:folder",
-      organizationId: p.organizationId
-    }));
-
-    // Set the first project as active if one exists
-    if (projects.value.length > 0) {
-      activeProjectId.value = projects.value[0].id;
-    }
-  } catch (error) {
-    console.error("Error fetching projects:", error);
-    useSonner.error("Failed to load projects", {
-      description: "There was an error loading your projects. Please refresh the page.",
-    });
+// Set first project as active when data is loaded
+watchEffect(() => {
+  if (projects.value.length > 0 && !activeProjectId.value) {
+    activeProjectId.value = projects.value[0].id;
   }
 });
 </script>
