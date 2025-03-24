@@ -353,9 +353,9 @@ const navItems: NavItem[] = [
     url: "#",
     icon: "lucide:settings-2",
     items: [
-      { title: "General", url: "#" },
-      { title: "Team", url: "#" },
-      { title: "Billing", url: "#" },
+      { title: "General", url: "/settings/general" },
+      { title: "Team", url: "/settings/team" },
+      { title: "Billing", url: "/settings/billing" },
       { title: "API Keys", url: "/settings/api-keys" },
     ],
   },
