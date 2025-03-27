@@ -54,19 +54,12 @@ const submit = handleSubmit(async (values) => {
       throw new Error(response.error.message)
     }
 
-    // Log the user in after signup
-    await auth.signIn.email({
-      email: values.email,
-      password: values.password
-    })
-
-
     useSonner("Account created!", {
       description: "You have successfully created an account.",
     });
 
     // Navigate to onboarding
-    navigateTo('/onboarding');
+    navigateTo('/onboarding', { external: true });
   } catch (error) {
     console.error(error)
 
