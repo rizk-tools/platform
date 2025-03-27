@@ -53,7 +53,7 @@ const submit = handleSubmit(async (values) => {
       description: "You have successfully created an account.",
     });
 
-    // Navigate to the login page after successful signup
+
     router.push('/onboarding')
   } catch (error) {
     console.error(error)

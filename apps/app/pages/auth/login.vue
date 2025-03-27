@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 
 const router = useRouter()
+const errorMessage = ref("")
 
 useSeoMeta({
   title: "Log in",
@@ -35,6 +36,7 @@ const submit = handleSubmit(async (values) => {
 
   try {
     isSubmitting.value = true;
+    errorMessage.value = ""; // Clear any previous errors
 
     const response = await auth.signIn.email({
       email: values.email,
@@ -53,6 +55,7 @@ const submit = handleSubmit(async (values) => {
     router.push('/')
   } catch (error) {
     console.error(error)
+    errorMessage.value = error instanceof Error ? error.message : "Invalid email or password. Please try again.";
 
     useSonner("Login failed", {
       description: error instanceof Error ? error.message : "Please check your credentials and try again.",
@@ -77,6 +80,12 @@ const signInWithGoogle = async () => {
 
         <form class="mt-10" @submit="submit">
           <fieldset :disabled="isSubmitting" class="grid gap-5">
+            <UiAlert v-if="errorMessage" :description="errorMessage">
+              <template #icon>
+                <Icon name="lucide:circle-alert" class="mt-0.5 size-4 text-red-500" aria-hidden="true" />
+              </template>
+            </UiAlert>
+
             <UiVeeInput required label="Email" type="email" name="email" placeholder="john@example.com" />
             <UiVeeInput required label="Password" type="password" name="password" />
             <UiButton class="w-full" type="submit" text="Log in" />
