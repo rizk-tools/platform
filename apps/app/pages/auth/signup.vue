@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { useAuthStore } from "@/stores/auth";
 
-const router = useRouter()
+// const router = useRouter()
 
 const title = "Sign Up";
 const description = "Create an account to get started.";
@@ -10,6 +11,7 @@ const description = "Create an account to get started.";
 useSeoMeta({ title, description });
 
 const isSubmitting = ref(false)
+const authStore = useAuthStore();
 
 const { handleSubmit } = useForm({
   validationSchema: toTypedSchema(
@@ -39,6 +41,9 @@ const submit = handleSubmit(async (values) => {
   try {
     isSubmitting.value = true;
 
+    // First reset auth store to clear any previous state
+    authStore.reset();
+
     const response = await auth.signUp.email({
       email: values.email,
       password: values.password,
@@ -49,12 +54,19 @@ const submit = handleSubmit(async (values) => {
       throw new Error(response.error.message)
     }
 
+    // Log the user in after signup
+    await auth.signIn.email({
+      email: values.email,
+      password: values.password
+    })
+
+
     useSonner("Account created!", {
       description: "You have successfully created an account.",
     });
 
-
-    router.push('/onboarding')
+    // Navigate to onboarding
+    navigateTo('/onboarding');
   } catch (error) {
     console.error(error)
 
