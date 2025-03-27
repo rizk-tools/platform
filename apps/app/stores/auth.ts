@@ -1,10 +1,36 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { auth } from '@/lib/auth'
+import type { Organization } from 'better-auth/plugins/organization'
+
+interface User {
+  id: string
+  name: string
+  email: string
+  emailVerified: boolean
+  createdAt: Date
+  updatedAt: Date
+  image?: string | null
+}
+
+interface Session {
+  user: User
+  session: {
+    id: string
+    createdAt: Date
+    updatedAt: Date
+    userId: string
+    expiresAt: Date
+    token: string
+    ipAddress?: string | null
+    userAgent?: string | null
+    activeOrganizationId?: string | null
+  }
+}
 
 interface AuthState {
-  session: any | null
-  organizations: any[]
+  session: Session | null
+  organizations: Organization[]
   isLoading: boolean
   isInitialized: boolean
 }
@@ -40,6 +66,25 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function setActiveOrganization (organizationId: string) {
+    try {
+      const response = await auth.organization.setActive({ organizationId })
+      if (session.value) {
+        session.value = {
+          ...session.value,
+          session: {
+            ...session.value.session,
+            activeOrganizationId: organizationId
+          }
+        }
+      }
+      return response
+    } catch (error) {
+      console.error('Failed to set active organization:', error)
+      throw error
+    }
+  }
+
   function reset () {
     session.value = null
     organizations.value = []
@@ -57,6 +102,7 @@ export const useAuthStore = defineStore('auth', () => {
     hasOrganizations,
     // actions
     initialize,
+    setActiveOrganization,
     reset
   }
 }) 
