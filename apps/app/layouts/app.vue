@@ -143,7 +143,7 @@
           <UiSidebarGroupLabel :label="activeProject.name" />
           <UiSidebarMenu>
             <UiCollapsible v-for="(item, index) in navItems" :key="index" v-slot="{ open }" as-child
-              :default-open="item.isActive">
+              :default-open="item.isActive || isNavItemActive(item)">
               <UiSidebarMenuItem>
                 <UiCollapsibleTrigger as-child>
                   <UiSidebarMenuButton :tooltip="item.title">
@@ -157,7 +157,9 @@
                 <UiCollapsibleContent>
                   <UiSidebarMenuSub>
                     <UiSidebarMenuSubItem v-for="subItem in item.items" :key="subItem.title">
-                      <UiSidebarMenuSubButton as-child>
+                      <UiSidebarMenuSubButton as-child
+                        class="hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-950 dark:hover:text-green-400 transition-colors duration-200"
+                        :class="[isRouteActive(subItem.url) && 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 font-medium']">
                         <NuxtLink :href="subItem.url">
                           <span>{{ subItem.title }}</span>
                         </NuxtLink>
@@ -302,6 +304,21 @@ const userData = {
   email: session.user.email,
   avatar: session.user.image || "",
 };
+
+// Current route for navigation
+const route = useRoute();
+
+// Check if a route is active
+function isRouteActive (url: string): boolean {
+  if (!url || url === '#') return false;
+  return route.path === url || route.path.startsWith(url + '/');
+}
+
+// Check if a nav item is active (if any of its children are active)
+function isNavItemActive (item: NavItem): boolean {
+  if (!item.items || item.items.length === 0) return false;
+  return item.items.some(subItem => isRouteActive(subItem.url));
+}
 
 // Navigation items
 const navItems: NavItem[] = [
