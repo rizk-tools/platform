@@ -7,6 +7,7 @@ import {
   getFacetedUniqueValues,
   getFilteredRowModel,
   getSortedRowModel,
+  getExpandedRowModel,
   useVueTable,
 } from "@tanstack/vue-table";
 import { Icon, UiCheckbox } from "#components";
@@ -23,6 +24,13 @@ declare module "@tanstack/vue-table" {
   interface ColumnMeta<TData extends RowData, TValue> {
     filterVariant?: "select";
   }
+}
+
+// Define the type for our data
+interface MonitoringResponse {
+  id: string;
+  attributes: Record<string, unknown>;
+  resourceAttributes: Record<string, unknown>;
 }
 
 definePageMeta({
@@ -43,9 +51,29 @@ const { data: items, isLoading, error } = useQuery({
   },
 })
 
-const columnHelper = createColumnHelper();
+const columnHelper = createColumnHelper<MonitoringResponse>();
 
 const columns = [
+  // Expand/collapse column
+  columnHelper.display({
+    id: "expand",
+    header: "",
+    cell: ({ row }) =>
+      h(
+        "button",
+        {
+          onClick: (e: MouseEvent) => {
+            e.stopPropagation();
+            row.toggleExpanded();
+          },
+          class: "cursor-pointer p-1"
+        },
+        h(Icon, {
+          name: row.getIsExpanded() ? "lucide:chevron-down" : "lucide:chevron-right",
+          class: "size-4"
+        })
+      ),
+  }),
   columnHelper.accessor("id", {
     enableSorting: false,
     enableGlobalFilter: false,
@@ -65,6 +93,7 @@ const columns = [
         checked: row.getIsSelected(),
         disabled: !row.getCanSelect(),
         "onUpdate:checked": row.getToggleSelectedHandler(),
+        onClick: (e: MouseEvent) => e.stopPropagation(),
       });
     },
   }),
@@ -72,7 +101,7 @@ const columns = [
     id: "query",
     header: "Query",
     sortingFn: "text",
-    cell: ({ getValue }) => h("span", { class: tw`font-medium` }, getValue()),
+    cell: ({ getValue }) => h("span", { class: "font-medium" }, getValue() as string),
   }),
   columnHelper.accessor(row => row.attributes["traceloop.workflow.name"], {
     id: "workflow",
@@ -89,15 +118,15 @@ const columns = [
     header: "Tags",
     enableSorting: false,
     cell: ({ getValue }) => {
-      const tags = getValue() || [];
+      const tags = getValue() as string[] || [];
       return h(
         "div",
-        { class: tw`flex items-center gap-1 flex-wrap` },
-        tags.map((tag) => {
+        { class: "flex items-center gap-1 flex-wrap" },
+        tags.map((tag: string) => {
           return h(
             "div",
             {
-              class: tw`px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded`,
+              class: "px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded",
             },
             tag
           );
@@ -117,7 +146,7 @@ const columns = [
       return new Intl.NumberFormat("en-US", {
         notation: "compact",
         maximumFractionDigits: 1,
-      }).format(getValue() || 0);
+      }).format(Number(getValue() || 0));
     },
   }),
   columnHelper.accessor(row => row.attributes["gen_ai.usage.cost"], {
@@ -129,26 +158,22 @@ const columns = [
         currency: "USD",
         minimumFractionDigits: 4,
         maximumFractionDigits: 4,
-      }).format(getValue() || 0);
+      }).format(Number(getValue() || 0));
     },
   }),
   columnHelper.accessor(row => row.resourceAttributes["deployment.environment"], {
     id: "environment",
     header: "Environment",
     cell: ({ getValue }) => {
-      const env = getValue();
-      const styles = {
+      const env = getValue() as string;
+      const styles: Record<string, string> = {
         development: "bg-amber-400/20 text-amber-600",
         staging: "bg-indigo-400/20 text-indigo-600",
         production: "bg-emerald-400/20 text-emerald-600",
       };
       const style = styles[env] || "bg-gray-400/20 text-gray-600";
 
-      return h(
-        "div",
-        { class: tw`px-2 py-1 rounded ${style} inline-block text-xs font-medium` },
-        env
-      );
+      return h("div", { class: `px-2 py-1 rounded ${style} inline-block text-xs font-medium` }, env);
     },
   }),
 ];
@@ -156,19 +181,23 @@ const columns = [
 const rowSelection = ref<RowSelectionState>({});
 const columnFilters = ref<ColumnFiltersState>([]);
 const sorting = ref<SortingState>([]);
+const expanded = ref({});
 const search = ref("");
 const globalFilter = refDebounced(search, 300);
+
 const table = useVueTable({
   columns,
   get data () {
     return items.value || [];
   },
   enableRowSelection: true,
+  enableExpanding: true,
   getCoreRowModel: getCoreRowModel(),
   getSortedRowModel: getSortedRowModel(),
   getFilteredRowModel: getFilteredRowModel(),
   getFacetedRowModel: getFacetedRowModel(),
   getFacetedUniqueValues: getFacetedUniqueValues(),
+  getExpandedRowModel: getExpandedRowModel(),
   state: {
     get rowSelection () {
       return rowSelection.value;
@@ -182,6 +211,9 @@ const table = useVueTable({
     get columnFilters () {
       return columnFilters.value;
     },
+    get expanded () {
+      return expanded.value;
+    }
   },
   onRowSelectionChange: (newRowSelection) => {
     rowSelection.value =
@@ -200,6 +232,10 @@ const table = useVueTable({
   onColumnFiltersChange: (updaterOrValue) => {
     columnFilters.value =
       typeof updaterOrValue === "function" ? updaterOrValue(columnFilters.value) : updaterOrValue;
+  },
+  onExpandedChange: (updaterOrValue) => {
+    expanded.value =
+      typeof updaterOrValue === "function" ? updaterOrValue(expanded.value) : updaterOrValue;
   },
 });
 </script>
@@ -249,15 +285,37 @@ const table = useVueTable({
         <UiTableBody>
           <!-- If there are rows, loop over them -->
           <template v-if="table.getRowModel().rows?.length">
-            <!-- For each row, loop over the tables `getRowModel().rows` -->
-            <UiTableRow v-for="row in table.getRowModel().rows" :key="row.id"
-              :data-state="row.getIsSelected() && 'selected'">
-              <!-- For each cell in the row, loop over the visible cells -->
-              <UiTableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
-                <!-- Render the cell -->
-                <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
-              </UiTableCell>
-            </UiTableRow>
+            <template v-for="row in table.getRowModel().rows" :key="row.id">
+              <!-- Regular row -->
+              <UiTableRow :data-state="row.getIsSelected() && 'selected'" class="cursor-pointer hover:bg-muted/50"
+                @click="row.toggleExpanded()">
+                <!-- For each cell in the row, loop over the visible cells -->
+                <UiTableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
+                  <!-- Render the cell -->
+                  <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
+                </UiTableCell>
+              </UiTableRow>
+
+              <!-- Expanded row content -->
+              <tr v-if="row.getIsExpanded()">
+                <td :colspan="columns.length" class="p-0">
+                  <div class="p-4 bg-muted/30 border-t border-b">
+                    <div class="grid grid-cols-2 gap-4">
+                      <div>
+                        <h3 class="font-medium text-sm mb-2">Request Details</h3>
+                        <pre
+                          class="text-xs bg-muted p-2 rounded max-h-80 overflow-auto">{{ JSON.stringify(row.original, null, 2) }}</pre>
+                      </div>
+                      <div>
+                        <h3 class="font-medium text-sm mb-2">Response</h3>
+                        <pre
+                          class="text-xs bg-muted p-2 rounded max-h-80 overflow-auto">{{ row.original.attributes?.["gen_ai.response.text"] || "No response text available" }}</pre>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </template>
           </template>
           <!-- If there are no rows, show a message -->
           <template v-else>
