@@ -331,7 +331,7 @@ const navItems: NavItem[] = [
     url: "#",
     icon: "lucide:activity",
     items: [
-      { title: "AI Responses", url: "#" },
+      { title: "AI Responses", url: "/monitoring/responses" },
       { title: "Compliance Logs", url: "#" },
       { title: "Violations", url: "#" },
       { title: "Alerts", url: "#" },
