@@ -7,6 +7,7 @@ import { cors } from "hono/cors";
 
 import policies from "@/routes/policies/policies.index";
 import projects from "@/routes/projects/projects.index";
+import monitoring from "@/routes/monitoring/monitoring.index";
 
 export function registerRoutes (app: AppOpenAPI) {
   return app
@@ -25,7 +26,8 @@ export function registerRoutes (app: AppOpenAPI) {
     // Apply auth middleware to all other routes
     .use(authMiddleware)
     .route("/", policies)
-    .route("/", projects);
+    .route("/", projects)
+    .route("/", monitoring);
 }
 
 export const router = registerRoutes(

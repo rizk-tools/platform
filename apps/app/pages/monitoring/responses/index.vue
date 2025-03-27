@@ -29,92 +29,21 @@ definePageMeta({
   layout: "app",
 });
 
-type Item = {
-  id: string;
-  keyword: string;
-  intents: Array<"Informational" | "Navigational" | "Commercial" | "Transactional">;
-  volume: number;
-  cpc: number;
-  traffic: number;
-  link: string;
-};
+// Define a query to fetch monitoring responses
+const { data: items, isLoading, error } = useQuery({
+  key: ['monitoring', 'responses'],
+  query: async () => {
+    const res = await client.api.monitoring.responses.$get()
 
-const items: Item[] = [
-  {
-    id: "1",
-    keyword: "react components",
-    intents: ["Informational", "Navigational"],
-    volume: 2507,
-    cpc: 2.5,
-    traffic: 88,
-    link: "https://www.originui.com",
-  },
-  {
-    id: "2",
-    keyword: "buy react templates",
-    intents: ["Commercial", "Transactional"],
-    volume: 1850,
-    cpc: 4.75,
-    traffic: 65,
-    link: "https://www.originui.com/templates",
-  },
-  {
-    id: "3",
-    keyword: "react ui library",
-    intents: ["Informational", "Commercial"],
-    volume: 3200,
-    cpc: 3.25,
-    traffic: 112,
-    link: "https://www.originui.com/docs",
-  },
-  {
-    id: "4",
-    keyword: "tailwind components download",
-    intents: ["Transactional"],
-    volume: 890,
-    cpc: 1.95,
-    traffic: 45,
-    link: "https://www.originui.com/download",
-  },
-  {
-    id: "5",
-    keyword: "react dashboard template free",
-    intents: ["Commercial", "Transactional"],
-    volume: 4100,
-    cpc: 5.5,
-    traffic: 156,
-    link: "https://www.originui.com/templates/dashboard",
-  },
-  {
-    id: "6",
-    keyword: "how to use react components",
-    intents: ["Informational"],
-    volume: 1200,
-    cpc: 1.25,
-    traffic: 42,
-    link: "https://www.originui.com/tutorials",
-  },
-  {
-    id: "7",
-    keyword: "react ui kit premium",
-    intents: ["Commercial", "Transactional"],
-    volume: 760,
-    cpc: 6.8,
-    traffic: 28,
-    link: "https://www.originui.com/pricing",
-  },
-  {
-    id: "8",
-    keyword: "react component documentation",
-    intents: ["Informational", "Navigational"],
-    volume: 950,
-    cpc: 1.8,
-    traffic: 35,
-    link: "https://www.originui.com/docs/components",
-  },
-];
+    if (!res.ok) {
+      throw new Error(`Failed to fetch monitoring responses: ${res.status} ${res.statusText}`)
+    }
 
-const columnHelper = createColumnHelper<Item>();
+    return await res.json()
+  },
+})
+
+const columnHelper = createColumnHelper();
 
 const columns = [
   columnHelper.accessor("id", {
@@ -139,84 +68,88 @@ const columns = [
       });
     },
   }),
-  columnHelper.accessor("keyword", {
-    header: "Keyword",
+  columnHelper.accessor(row => row.attributes["traceloop.association.properties.query"], {
+    id: "query",
+    header: "Query",
     sortingFn: "text",
     cell: ({ getValue }) => h("span", { class: tw`font-medium` }, getValue()),
   }),
-  columnHelper.accessor("intents", {
-    header: "Intents",
+  columnHelper.accessor(row => row.attributes["traceloop.workflow.name"], {
+    id: "workflow",
+    header: "Workflow",
+    sortingFn: "text",
+  }),
+  columnHelper.accessor(row => row.resourceAttributes["service.name"], {
+    id: "service",
+    header: "Service",
+    sortingFn: "text",
+  }),
+  columnHelper.accessor(row => row.resourceAttributes["langfuse.tags"], {
+    id: "tags",
+    header: "Tags",
     enableSorting: false,
-    meta: {
-      filterVariant: "select",
-    },
-    filterFn: "arrIncludes",
     cell: ({ getValue }) => {
-      const styles = {
-        Informational: "bg-indigo-400/20 text-indigo-500",
-        Navigational: "bg-emerald-400/20 text-emerald-500",
-        Commercial: "bg-amber-400/20 text-amber-500",
-        Transactional: "bg-rose-400/20 text-rose-500",
-      } as const;
+      const tags = getValue() || [];
       return h(
         "div",
-        { class: tw`flex items-center gap-1` },
-        getValue().map((intent) => {
-          const intentStyle = styles[intent];
+        { class: tw`flex items-center gap-1 flex-wrap` },
+        tags.map((tag) => {
           return h(
             "div",
             {
-              class:
-                tw`flex size-5 items-center justify-center rounded text-xs font-medium ` +
-                intentStyle,
+              class: tw`px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded`,
             },
-            intent.charAt(0)
+            tag
           );
         })
       );
     },
   }),
-  columnHelper.accessor("volume", {
-    header: "Volume",
-    filterFn: "inNumberRange",
+  columnHelper.accessor(row => row.attributes["gen_ai.request.model"], {
+    id: "model",
+    header: "Model",
+    sortingFn: "text",
+  }),
+  columnHelper.accessor(row => row.attributes["gen_ai.usage.total_tokens"], {
+    id: "tokens",
+    header: "Tokens",
     cell: ({ getValue }) => {
       return new Intl.NumberFormat("en-US", {
         notation: "compact",
         maximumFractionDigits: 1,
-      }).format(getValue());
+      }).format(getValue() || 0);
     },
   }),
-  columnHelper.accessor("cpc", {
-    header: "CPC",
-    cell: ({ getValue }) => getValue(),
+  columnHelper.accessor(row => row.attributes["gen_ai.usage.cost"], {
+    id: "cost",
+    header: "Cost",
+    cell: ({ getValue }) => {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 4,
+        maximumFractionDigits: 4,
+      }).format(getValue() || 0);
+    },
   }),
+  columnHelper.accessor(row => row.resourceAttributes["deployment.environment"], {
+    id: "environment",
+    header: "Environment",
+    cell: ({ getValue }) => {
+      const env = getValue();
+      const styles = {
+        development: "bg-amber-400/20 text-amber-600",
+        staging: "bg-indigo-400/20 text-indigo-600",
+        production: "bg-emerald-400/20 text-emerald-600",
+      };
+      const style = styles[env] || "bg-gray-400/20 text-gray-600";
 
-  columnHelper.accessor("traffic", {
-    header: "Traffic",
-    cell: ({ getValue }) => {
-      return new Intl.NumberFormat("en-US", {
-        notation: "compact",
-        maximumFractionDigits: 1,
-      }).format(getValue());
+      return h(
+        "div",
+        { class: tw`px-2 py-1 rounded ${style} inline-block text-xs font-medium` },
+        env
+      );
     },
-  }),
-  columnHelper.accessor("link", {
-    header: "Link",
-    enableSorting: false,
-    enableGlobalFilter: false,
-    cell: ({ getValue }) =>
-      h(
-        "a",
-        {
-          href: getValue(),
-          target: "_blank",
-          class: tw`inline-flex items-center gap-1 hover:underline`,
-        },
-        [
-          getValue(),
-          h(Icon, { name: "lucide:external-link", class: tw`size-3`, ariaHidden: true }),
-        ]
-      ),
   }),
 ];
 
@@ -227,9 +160,11 @@ const search = ref("");
 const globalFilter = refDebounced(search, 300);
 const table = useVueTable({
   columns,
-  data: items,
+  get data () {
+    return items.value || [];
+  },
   enableRowSelection: true,
-  getCoreRowModel: getCoreRowModel<Item>(),
+  getCoreRowModel: getCoreRowModel(),
   getSortedRowModel: getSortedRowModel(),
   getFilteredRowModel: getFilteredRowModel(),
   getFacetedRowModel: getFacetedRowModel(),
@@ -253,8 +188,6 @@ const table = useVueTable({
       typeof newRowSelection === "function"
         ? newRowSelection(rowSelection.value)
         : newRowSelection;
-    // optionally do something else with the row selection
-    // emit('row-selection-change', rowSelection.value)
   },
   onSortingChange: (updaterOrValue) => {
     sorting.value =
@@ -277,10 +210,21 @@ const table = useVueTable({
 
     <div>
       <div class="md:w-1/2 lg:max-w-[300px]">
-        <UiVeeInput v-model="search" placeholder="Search keyword" icon="lucide:search" label="Keywords" />
+        <UiVeeInput v-model="search" placeholder="Search queries" icon="lucide:search" label="Search" />
       </div>
-      <!-- Render the table -->
-      <UiTable class="mt-8">
+
+      <!-- Loading and error states -->
+      <div v-if="isLoading" class="mt-8 flex justify-center">
+        <Icon class="size-8" name="lucide:loader-circle" />
+      </div>
+
+      <div v-else-if="error"
+        class="mt-8 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive">
+        <p>{{ error.message || 'Failed to load responses' }}</p>
+      </div>
+
+      <!-- Render the table when data is loaded -->
+      <UiTable v-else class="mt-8">
         <UiTableHeader>
           <!-- For rows, we loop over the tables `getHeaderGroups` function -->
           <UiTableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id" class="bg-muted/50">
@@ -298,34 +242,6 @@ const table = useVueTable({
                   class="size-4 shrink-0 text-muted-foreground" />
                 <Icon v-else-if="header.column.getCanSort()" name="lucide:chevrons-up-down"
                   class="size-4 shrink-0 text-muted-foreground/30" />
-                <div v-if="
-                  header.column.getCanFilter() &&
-                  header.column.columnDef?.meta?.filterVariant &&
-                  header.column.columnDef?.meta?.filterVariant == 'select'
-                ">
-                  <UiDropdownMenu>
-                    <UiDropdownMenuTrigger as-child>
-                      <UiButton variant="ghost" class="size-7" size="xs">
-                        <Icon name="lucide:list-filter" class="size-4" />
-                      </UiButton>
-                    </UiDropdownMenuTrigger>
-                    <UiDropdownMenuContent class="w-48">
-                      <UiDropdownMenuRadioGroup :model-value="(header.column.getFilterValue() as string) ?? 'All'"
-                        @update:model-value="
-                          (e) => header.column.setFilterValue(e == 'All' ? undefined : e)
-                        ">
-                        <UiDropdownMenuRadioItem v-for="item in [
-                          'All',
-                          'Informational',
-                          'Navigational',
-                          'Commercial',
-                          'Transactional',
-                        ]" :key="item" :value="item" :title="item" :text-value="item"
-                          @select="(e) => e.preventDefault()" />
-                      </UiDropdownMenuRadioGroup>
-                    </UiDropdownMenuContent>
-                  </UiDropdownMenu>
-                </div>
               </div>
             </UiTableHead>
           </UiTableRow>
@@ -353,14 +269,6 @@ const table = useVueTable({
           </template>
         </UiTableBody>
       </UiTable>
-      <p class="mt-4 text-center text-sm text-muted-foreground">
-        Data table with filters made with
-        <a class="underline hover:text-foreground" href="https://tanstack.com/table" target="_blank"
-          rel="noopener noreferrer">
-          TanStack Table
-        </a>
-      </p>
     </div>
-
   </div>
 </template>
