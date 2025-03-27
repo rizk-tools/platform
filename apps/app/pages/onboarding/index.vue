@@ -33,6 +33,6 @@ const completeOnboarding = async () => {
   //   callbackURL: 'http://localhost:3000/onboarding'
   // });
 
-  router.push('/');
+  router.push('/', { external: true });
 };
 </script>

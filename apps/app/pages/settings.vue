@@ -24,29 +24,23 @@ const items = [
 
 const route = useRoute();
 
-function isActive(path: string) {
+function isActive (path: string) {
   return route.path === path;
 }
 </script>
 
 <template>
- <div class="col-span-3 space-y-6">
-    <h1 class="text-2xl font-semibold">Settings</h1>
-    <p class="text-sm text-muted-foreground">Manage your account settings and preferences</p>
+  <div class="col-span-3 space-y-6">
+    <CommonPageTitle title="Settings" description="Manage your account settings and preferences" />
 
     <UiSeparator />
 
     <div class="flex flex-1 flex-col space-y-2 overflow-hidden md:space-y-2 lg:flex-row lg:space-x-12 lg:space-y-0">
       <div class="flex gap-1 flex-col max-w-40 w-full">
-        <NuxtLink 
-          v-for="item in items" 
-          :key="item.to"
-          :to="item.to" 
-          :class="[
-            'group inline-flex items-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 py-2 justify-start gap-4 px-3',
-            isActive(item.to) ? 'bg-accent text-accent-foreground' : ''
-          ]"
-        >
+        <NuxtLink v-for="item in items" :key="item.to" :to="item.to" :class="[
+          'group inline-flex items-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 py-2 justify-start gap-4 px-3',
+          isActive(item.to) ? 'bg-accent text-accent-foreground' : ''
+        ]">
           <Icon :name="item.icon" class="size-4" />
           <span>{{ item.label }}</span>
         </NuxtLink>
