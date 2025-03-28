@@ -311,6 +311,16 @@ const route = useRoute();
 // Check if a route is active
 function isRouteActive (url: string): boolean {
   if (!url || url === '#') return false;
+  
+  // For parent routes (that end with just the path segment), use exact matching
+  if (!url.includes('#') && !url.endsWith('/')) {
+    const isParentRoute = !url.split('/').pop()?.includes('.');
+    if (isParentRoute) {
+      return route.path === url;
+    }
+  }
+  
+  // For subpages, keep the startsWith behavior
   return route.path === url || route.path.startsWith(url + '/');
 }
 
@@ -336,11 +346,21 @@ const navItems: NavItem[] = [
   {
     title: "Policies",
     url: "#",
-    icon: "lucide:file-lock",
+    icon: "lucide:shield",
     items: [
-      { title: "All Policies", url: "#" },
-      { title: "Create Policy", url: "#" },
-      { title: "Templates", url: "#" },
+      { title: "My Policies", url: "/policies" },
+      { title: "Create Policy", url: "/policies/create" },
+      { title: "Policy Templates", url: "/policies/templates" },
+    ],
+  },
+  {
+    title: "Compliance",
+    url: "#",
+    icon: "lucide:file-check",
+    items: [
+      { title: "Frameworks", url: "#" },
+      { title: "Audits", url: "#" },
+      { title: "Reports", url: "#" },
     ],
   },
   {
@@ -355,6 +375,16 @@ const navItems: NavItem[] = [
     ],
   },
   {
+    title: "Integrations",
+    url: "#",
+    icon: "lucide:puzzle",
+    items: [
+      { title: "API Keys", url: "#" },
+      { title: "Connectors", url: "#" },
+      { title: "Webhooks", url: "#" },
+    ],
+  },
+  {
     title: "Documentation",
     url: "#",
     icon: "lucide:book-open",
@@ -362,7 +392,7 @@ const navItems: NavItem[] = [
       { title: "Getting Started", url: "#" },
       { title: "SDK Integration", url: "#" },
       { title: "Policy Writing", url: "#" },
-      { title: "Compliance Frameworks", url: "#" },
+      { title: "Colang Reference", url: "#" },
     ],
   },
   {

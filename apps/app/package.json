@@ -29,6 +29,7 @@
     "better-auth": "^1.2.5-beta.5",
     "eslint": "^9.0.0",
     "hono": "^4.7.4",
+    "markdown-it": "^14.1.0",
     "nuxt": "^3.16.0",
     "pinia": "^3.0.1",
     "radix-vue": "^1.9.17",
