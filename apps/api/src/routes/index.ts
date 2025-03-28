@@ -23,12 +23,12 @@ export function registerRoutes (app: AppOpenAPI) {
     .on(["POST", "GET"], "/auth/**", async (c) => {
       return auth.handler(c.req.raw);
     })
+    .route("/", check)
     // Apply auth middleware to all other routes
     .use(authMiddleware)
     .route("/", policies)
     .route("/", projects)
-    .route("/", monitoring)
-    .route("/", check);
+    .route("/", monitoring);
 }
 
 export const router = registerRoutes(
