@@ -47,6 +47,7 @@ export default defineNuxtConfig({
   },
 
   nitro: {
+    preset: "bun",
     routeRules: {
       "/api/**": {
         proxy: "http://localhost:3001/**"
