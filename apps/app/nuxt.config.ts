@@ -16,6 +16,7 @@ export default defineNuxtConfig({
     "@morev/vue-transitions/nuxt",
     "@pinia/colada-nuxt",
     "@pinia/nuxt",
+    "@samk-dev/nuxt-vcalendar"
   ],
 
   tailwindcss: {

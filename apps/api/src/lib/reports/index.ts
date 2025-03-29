@@ -4,7 +4,8 @@
 
 // Base utilities
 export { HTMLComponentBuilder } from './HTMLComponentBuilder';
-export { BaseReport, ReportParams, BaseReportData } from './BaseReport';
+export { BaseReport } from './BaseReport';
+export type { ReportParams, BaseReportData } from './BaseReport';
 
 // Report types
 export { EUAIActReport } from './eu-ai-act/EUAIActReport';
