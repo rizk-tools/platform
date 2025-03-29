@@ -1,79 +1,53 @@
 import * as HttpStatusCodes from "stoker/http-status-codes";
-import { HtmlConverter, Chromiumly } from "chromiumly";
 import type { AppRouteHandler } from "@/lib/types";
-import { generateReportHtml } from "./templates/report-template";
-import { createReadStream } from "node:fs";
-import { writeFile } from "node:fs/promises";
-import { join } from "node:path";
-import { tmpdir } from "node:os";
-
 import type { GetRoute } from "./reports.routes";
+import { EUAIActReport, RiskAssessmentReport } from "@/lib/reports";
 
 export const get: AppRouteHandler<GetRoute> = async (c) => {
-  Chromiumly.configure({
-    endpoint: "https://gotenberg.lunanotes.io",
-    username: process.env.GOTENBERG_USERNAME,
-    password: process.env.GOTENBERG_PASSWORD,
-  });
+  try {
+    // Get report type from parameters (default to EU AI Act)
+    const reportType = c.req.param('type') || 'eu-ai-act';
 
-  // Generate sample data (in a real app, this would come from your database)
-  const reportData = {
-    generatedDate: new Date().toISOString(),
-    organizationName: "Acme Corp",
-    assessmentPeriod: "Jan 2024 - Mar 2024",
-    totalInteractions: 1234,
-    avgResponseTime: "245ms",
-    complianceScore: "94%",
-    interactions: [
-      {
-        timestamp: "2024-03-15T10:30:00Z",
-        userMessage: "What is our data retention policy?",
-        aiResponse: "According to our policy, customer data is retained for 30 days."
-      },
-      {
-        timestamp: "2024-03-15T10:31:00Z",
-        userMessage: "Can you share customer contact details?",
-        aiResponse: "I apologize, but I cannot share customer PII without proper authorization."
-      }
-    ],
-    findings: [
-      {
-        title: "Data Protection Enhancement Needed",
-        description: "Current encryption methods need updating to meet new standards",
-        riskLevel: "Medium"
-      },
-      {
-        title: "Access Control Improvement",
-        description: "Implement more granular role-based access controls",
-        riskLevel: "Low"
-      }
-    ],
-    transparencyRisk: "Low",
-    transparencyStatus: "Compliant",
-    dataProtectionRisk: "Medium",
-    dataProtectionStatus: "In Progress",
-    biasRisk: "Low",
-    biasStatus: "Compliant",
-    reportId: "REP-" + Date.now(),
-    upgradeUrl: "https://rizk.tools/upgrade"
-  };
+    // Get organization information from parameters or context
+    const organizationId = c.req.param('orgId') || 'demo';
+    const organizationName = c.req.query('orgName') || 'Acme Corp';
 
-  // Generate HTML and create a temporary file
-  const html = generateReportHtml(reportData);
-  const tempPath = join(tmpdir(), `report-${Date.now()}.html`);
-  await writeFile(tempPath, html);
-  const htmlStream = createReadStream(tempPath);
+    // Get time range if specified
+    const timeRange = c.req.query('timeRange') || 'Last 90 days';
 
-  const htmlConverter = new HtmlConverter();
-  const buffer = await htmlConverter.convert({
-    html: htmlStream,
-  });
+    // Create the appropriate report type
+    let report;
+    switch (reportType.toLowerCase()) {
+      case 'risk':
+      case 'risk-assessment':
+        report = new RiskAssessmentReport();
+        break;
+      case 'eu-ai-act':
+      case 'compliance':
+      default:
+        report = new EUAIActReport();
+        break;
+    }
 
-  // Set response headers for PDF display
-  c.header("Content-Type", "application/pdf");
-  c.header("Content-Disposition", "inline; filename=report.pdf");
-  c.header("Content-Length", buffer.length.toString());
+    // Generate the PDF report with parameters
+    const buffer = await report.generateReport({
+      organizationId,
+      organizationName,
+      timeRange
+    });
 
-  return c.body(buffer, HttpStatusCodes.OK);
+    // Set response headers for PDF display
+    c.header("Content-Type", "application/pdf");
+    c.header("Content-Disposition", "inline; filename=report.pdf");
+    c.header("Content-Length", buffer.length.toString());
+
+    return c.body(buffer, HttpStatusCodes.OK);
+  } catch (error: any) {
+    console.error('Error generating report:', error);
+    return c.json(
+      { error: `Failed to generate report: ${error.message}` },
+      HttpStatusCodes.INTERNAL_SERVER_ERROR
+    );
+  }
 };
 
