@@ -2,7 +2,6 @@
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 
-const router = useRouter()
 const errorMessage = ref("")
 
 useSeoMeta({
@@ -52,7 +51,7 @@ const submit = handleSubmit(async (values) => {
     });
 
     // Navigate to the home page after successful login
-    router.push('/')
+    navigateTo('/', { external: true })
   } catch (error) {
     console.error(error)
     errorMessage.value = error instanceof Error ? error.message : "Invalid email or password. Please try again.";

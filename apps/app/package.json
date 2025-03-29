@@ -24,6 +24,7 @@
     "@rizk/api": "workspace:*",
     "@tailwindcss/forms": "^0.5.10",
     "@tanstack/vue-table": "^8.21.2",
+    "@tato30/vue-pdf": "^1.11.3",
     "@vee-validate/nuxt": "^4.15.0",
     "@vee-validate/zod": "^4.15.0",
     "@vueuse/nuxt": "^13.0.0",

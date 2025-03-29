@@ -340,7 +340,7 @@ const navItems: NavItem[] = [
     items: [
       { title: "Overview", url: "/" },
       { title: "Analytics", url: "#" },
-      { title: "Reports", url: "#" },
+      { title: "Reports", url: "/reports" },
     ],
   },
   {
