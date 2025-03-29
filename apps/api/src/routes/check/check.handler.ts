@@ -4,7 +4,7 @@ import type { AppRouteHandler } from "@/lib/types";
 
 import { auth } from "@/lib/auth";
 
-import type { CreateRoute } from "./projects.routes";
+import type { CreateRoute } from "./check.routes";
 
 export const create: AppRouteHandler<CreateRoute> = async (c) => {
   const key = c.req.header('x-api-key') || ""

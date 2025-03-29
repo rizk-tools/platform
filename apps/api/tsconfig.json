@@ -4,6 +4,9 @@
     "strict": true,
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "target": "ESNext",
     "paths": {
       "@/*": [
         "./src/*"
