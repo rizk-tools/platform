@@ -51,7 +51,7 @@ export default defineNuxtConfig({
     preset: "bun",
     routeRules: {
       "/api/**": {
-        proxy: "http://localhost:3001/**"
+        proxy: `${process.env.API_URL}/**`
       }
     },
   },
