@@ -9,8 +9,8 @@
   },
   "scripts": {
     "dev": "bun run --hot src/app.ts",
-    "start": "bun run db:migrate && ./server",
-    "build": "bun build src/app.ts --compile --outfile server",
+    "start": "bun run src/app.ts",
+    "build": "bun run db:migrate",
     "db:studio": "bunx drizzle-kit studio --port 3002",
     "db:push": "bunx drizzle-kit push",
     "db:generate": "bunx drizzle-kit generate",
