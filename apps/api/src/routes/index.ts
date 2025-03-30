@@ -21,6 +21,13 @@ export function registerRoutes (app: AppOpenAPI) {
       maxAge: 600,
       credentials: true,
     }))
+    .get('/health', (c) => {
+      return c.json({
+        status: 'ok',
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString()
+      })
+    })
     // Auth routes should be before the authMiddleware
     .on(["POST", "GET"], "/auth/**", async (c) => {
       return auth.handler(c.req.raw);
