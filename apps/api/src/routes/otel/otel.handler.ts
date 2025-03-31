@@ -13,10 +13,10 @@ declare function saveToClickHouse (rawBody: Buffer, tenantId: string): Promise<v
 declare function enqueueForForwarding (rawBody: Buffer, tenantId: string): Promise<void>;
 
 const root = await protobuf.load([
-  "proto/opentelemetry/proto/collector/trace/v1/trace_service.proto",
-  "proto/opentelemetry/proto/trace/v1/trace.proto",
-  "proto/opentelemetry/proto/common/v1/common.proto",
-  "proto/opentelemetry/proto/resource/v1/resource.proto",
+  "../../proto/opentelemetry/proto/collector/trace/v1/trace_service.proto",
+  "../../proto/opentelemetry/proto/trace/v1/trace.proto",
+  "../../proto/opentelemetry/proto/common/v1/common.proto",
+  "../../proto/opentelemetry/proto/resource/v1/resource.proto",
 ])
 
 const ExportTraceServiceRequest = root.lookupType('opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest')
