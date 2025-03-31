@@ -7,7 +7,7 @@ const commonConfig = {
   tags,
   request: {
     headers: z.object({
-      "x-api-key": z.string(),
+      "authorization": z.string(),
       "content-type": z.literal("application/x-protobuf"),
     }),
   },
