@@ -8,7 +8,7 @@ import { cors } from "hono/cors";
 import policies from "@/routes/policies/policies.index";
 import projects from "@/routes/projects/projects.index";
 import monitoring from "@/routes/monitoring/monitoring.index";
-import check from "@/routes/check/check.index";
+import otel from "@/routes/otel/otel.index";
 import reports from "@/routes/reports/reports.index";
 
 export function registerRoutes (app: AppOpenAPI) {
@@ -32,7 +32,7 @@ export function registerRoutes (app: AppOpenAPI) {
     .on(["POST", "GET"], "/auth/**", async (c) => {
       return auth.handler(c.req.raw);
     })
-    .route("/", check)
+    .route("/", otel)
     .route("/", reports)
     // Apply auth middleware to all other routes
     .use(authMiddleware)
