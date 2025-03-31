@@ -18,6 +18,7 @@
     "auth:generate": "bunx @better-auth/cli@latest generate"
   },
   "dependencies": {
+    "@clickhouse/client": "^1.11.0",
     "@hono/zod-openapi": "^0.19.2",
     "@rizk/emails": "workspace:*",
     "better-auth": "^1.2.4",
@@ -27,6 +28,7 @@
     "drizzle-zod": "^0.7.0",
     "hono": "^4.7.4",
     "pg": "^8.14.1",
+    "protobufjs": "^7.4.0",
     "resend": "^4.1.2",
     "stoker": "^1.4.2"
   },
