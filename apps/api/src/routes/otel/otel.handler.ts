@@ -22,7 +22,7 @@ const root = await protobuf.load([
 const ExportTraceServiceRequest = root.lookupType('opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest')
 
 async function handleOtelRequest (c: any, rawBody: Buffer) {
-  const key = c.req.header('x-api-key') || "";
+  const key = c.req.header('authorization') || "";
 
   console.log(`Received request with key: ${key}`);
 
