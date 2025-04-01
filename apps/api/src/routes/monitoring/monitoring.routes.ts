@@ -4,43 +4,43 @@ import { jsonContent } from "stoker/openapi/helpers";
 
 const tags = ["Monitoring"];
 
-const attributesSchema = z.object({
-  "traceloop.workflow.name": z.string(),
-  "traceloop.association.properties.conversation_id": z.string(),
-  "traceloop.association.properties.query": z.string(),
-  "traceloop.association.properties.organization_id": z.string(),
-  "traceloop.association.properties.project_id": z.string(),
-  "traceloop.association.properties.agent_id": z.string(),
-  "traceloop.association.properties.langfuse.session.id": z.string(),
-  "gen_ai.request.model": z.string(),
-  "gen_ai.request.temperature": z.number(),
-  "gen_ai.request.max_tokens": z.number(),
-  "gen_ai.prompt": z.string(),
-  "gen_ai.completion": z.string(),
-  "gen_ai.usage.total_tokens": z.number(),
-  "gen_ai.usage.prompt_tokens": z.number(),
-  "gen_ai.usage.completion_tokens": z.number(),
-  "gen_ai.usage.cost": z.number(),
-});
+// More flexible schema that accepts any attribute keys
+const attributesSchema = z.record(z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.array(z.string()),
+  z.array(z.number()),
+  z.array(z.boolean())
+])).default({});
 
-const resourceAttributesSchema = z.object({
-  "service.name": z.string(),
-  "service.version": z.string(),
-  "deployment.environment": z.string(),
-  "langfuse.user.id": z.string(),
-  "langfuse.session.id": z.string(),
-  "langfuse.tags": z.array(z.string()),
-});
+const resourceAttributesSchema = z.record(z.union([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.array(z.string()),
+  z.array(z.number()),
+  z.array(z.boolean())
+])).default({});
 
 const scopeSchema = z.object({
   name: z.string(),
-});
+}).default({ name: "" });
 
+// Allow any data structure for the raw data
+const rawDataSchema = z.any();
+
+// This schema now matches what the handler actually returns
 const telemetryItemSchema = z.object({
   id: z.string(),
   attributes: attributesSchema,
   resourceAttributes: resourceAttributesSchema,
   scope: scopeSchema,
+  raw: rawDataSchema.optional()
+});
+
+const errorSchema = z.object({
+  error: z.string()
 });
 
 export const listResponses = createRoute({
@@ -51,6 +51,18 @@ export const listResponses = createRoute({
     [HttpStatusCodes.OK]: jsonContent(
       z.array(telemetryItemSchema),
       "The list of OpenTelemetry traces",
+    ),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      errorSchema,
+      "User is not authenticated"
+    ),
+    [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+      errorSchema,
+      "Bad request, e.g. missing organization"
+    ),
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      errorSchema,
+      "Internal server error"
     ),
   },
 });

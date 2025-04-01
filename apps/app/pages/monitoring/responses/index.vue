@@ -26,11 +26,103 @@ declare module "@tanstack/vue-table" {
   }
 }
 
+// Define type for OpenTelemetry value types
+type OtelValueType = string | number | boolean | string[] | number[] | boolean[];
+
 // Define the type for our data
 interface MonitoringResponse {
   id: string;
   attributes: Record<string, unknown>;
   resourceAttributes: Record<string, unknown>;
+  raw?: Record<string, unknown>;
+}
+
+// Helper function to extract attributes from raw data
+function extractAttributes(response: MonitoringResponse, key: string, defaultValue: OtelValueType = ""): OtelValueType {
+  // If we have the attributes already, use them
+  if (response.attributes && response.attributes[key] !== undefined) {
+    return response.attributes[key] as OtelValueType;
+  }
+  
+  // If we have raw data from ClickHouse, extract from there
+  if (response.raw) {
+    // Try to find the resource spans data
+    if (response.raw.resourceSpans) {
+      for (const resourceSpan of (response.raw.resourceSpans as any[])) {
+        if (resourceSpan.scopeSpans) {
+          for (const scopeSpan of (resourceSpan.scopeSpans as any[])) {
+            if (scopeSpan.spans) {
+              for (const span of (scopeSpan.spans as any[])) {
+                if (span.attributes) {
+                  // Search for the attribute in the KeyValue pairs
+                  for (const attr of (span.attributes as any[])) {
+                    if (attr.key === key) {
+                      if (attr.value) {
+                        if (attr.value.stringValue !== undefined) return attr.value.stringValue;
+                        if (attr.value.intValue !== undefined) return attr.value.intValue;
+                        if (attr.value.doubleValue !== undefined) return attr.value.doubleValue;
+                        if (attr.value.boolValue !== undefined) return attr.value.boolValue;
+                        if (attr.value.arrayValue?.values) {
+                          return attr.value.arrayValue.values.map((v: Record<string, unknown>) => {
+                            if (v.stringValue !== undefined) return v.stringValue;
+                            if (v.intValue !== undefined) return v.intValue;
+                            if (v.doubleValue !== undefined) return v.doubleValue;
+                            if (v.boolValue !== undefined) return v.boolValue;
+                            return null;
+                          }).filter(Boolean) as OtelValueType;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  return defaultValue;
+}
+
+// Helper to extract resource attributes from raw data
+function extractResourceAttributes(response: MonitoringResponse, key: string, defaultValue: OtelValueType = ""): OtelValueType {
+  // If we have the resource attributes directly, use them
+  if (response.resourceAttributes && response.resourceAttributes[key] !== undefined) {
+    return response.resourceAttributes[key] as OtelValueType;
+  }
+  
+  // If we have raw data, extract from there
+  if (response.raw) {
+    if (response.raw.resourceSpans) {
+      for (const resourceSpan of (response.raw.resourceSpans as any[])) {
+        if (resourceSpan.resource && resourceSpan.resource.attributes) {
+          for (const attr of (resourceSpan.resource.attributes as any[])) {
+            if (attr.key === key) {
+              if (attr.value) {
+                if (attr.value.stringValue !== undefined) return attr.value.stringValue;
+                if (attr.value.intValue !== undefined) return attr.value.intValue;
+                if (attr.value.doubleValue !== undefined) return attr.value.doubleValue;
+                if (attr.value.boolValue !== undefined) return attr.value.boolValue;
+                if (attr.value.arrayValue?.values) {
+                  return attr.value.arrayValue.values.map((v: Record<string, unknown>) => {
+                    if (v.stringValue !== undefined) return v.stringValue;
+                    if (v.intValue !== undefined) return v.intValue;
+                    if (v.doubleValue !== undefined) return v.doubleValue;
+                    if (v.boolValue !== undefined) return v.boolValue;
+                    return null;
+                  }).filter(Boolean) as OtelValueType;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  return defaultValue;
 }
 
 definePageMeta({
@@ -97,23 +189,23 @@ const columns = [
       });
     },
   }),
-  columnHelper.accessor(row => row.attributes["traceloop.association.properties.query"], {
+  columnHelper.accessor(row => extractAttributes(row, "traceloop.association.properties.query"), {
     id: "query",
     header: "Query",
     sortingFn: "text",
     cell: ({ getValue }) => h("span", { class: "font-medium" }, getValue() as string),
   }),
-  columnHelper.accessor(row => row.attributes["traceloop.workflow.name"], {
+  columnHelper.accessor(row => extractAttributes(row, "traceloop.workflow.name"), {
     id: "workflow",
     header: "Workflow",
     sortingFn: "text",
   }),
-  columnHelper.accessor(row => row.resourceAttributes["service.name"], {
+  columnHelper.accessor(row => extractResourceAttributes(row, "service.name"), {
     id: "service",
     header: "Service",
     sortingFn: "text",
   }),
-  columnHelper.accessor(row => row.resourceAttributes["langfuse.tags"], {
+  columnHelper.accessor(row => extractResourceAttributes(row, "langfuse.tags"), {
     id: "tags",
     header: "Tags",
     enableSorting: false,
@@ -134,12 +226,12 @@ const columns = [
       );
     },
   }),
-  columnHelper.accessor(row => row.attributes["gen_ai.request.model"], {
+  columnHelper.accessor(row => extractAttributes(row, "gen_ai.request.model"), {
     id: "model",
     header: "Model",
     sortingFn: "text",
   }),
-  columnHelper.accessor(row => row.attributes["gen_ai.usage.total_tokens"], {
+  columnHelper.accessor(row => extractAttributes(row, "gen_ai.usage.total_tokens"), {
     id: "tokens",
     header: "Tokens",
     cell: ({ getValue }) => {
@@ -149,7 +241,7 @@ const columns = [
       }).format(Number(getValue() || 0));
     },
   }),
-  columnHelper.accessor(row => row.attributes["gen_ai.usage.cost"], {
+  columnHelper.accessor(row => extractAttributes(row, "gen_ai.usage.cost"), {
     id: "cost",
     header: "Cost",
     cell: ({ getValue }) => {
@@ -161,7 +253,7 @@ const columns = [
       }).format(Number(getValue() || 0));
     },
   }),
-  columnHelper.accessor(row => row.resourceAttributes["deployment.environment"], {
+  columnHelper.accessor(row => extractResourceAttributes(row, "deployment.environment"), {
     id: "environment",
     header: "Environment",
     cell: ({ getValue }) => {
@@ -238,6 +330,43 @@ const table = useVueTable({
       typeof updaterOrValue === "function" ? updaterOrValue(expanded.value) : updaterOrValue;
   },
 });
+
+// Helper to extract completion/response text from a record
+function getResponseText(item: MonitoringResponse): string {
+  // First try to get it from the attributes
+  if (item.attributes && item.attributes["gen_ai.response.text"]) {
+    return item.attributes["gen_ai.response.text"] as string;
+  }
+  
+  if (item.attributes && item.attributes["gen_ai.completion"]) {
+    return item.attributes["gen_ai.completion"] as string;
+  }
+  
+  // Then try to extract it from raw data
+  if (item.raw && item.raw.resourceSpans) {
+    for (const resourceSpan of (item.raw.resourceSpans as any[])) {
+      if (resourceSpan.scopeSpans) {
+        for (const scopeSpan of (resourceSpan.scopeSpans as any[])) {
+          if (scopeSpan.spans) {
+            for (const span of (scopeSpan.spans as any[])) {
+              if (span.attributes) {
+                for (const attr of (span.attributes as any[])) {
+                  if (attr.key === "gen_ai.response.text" || attr.key === "gen_ai.completion") {
+                    if (attr.value && attr.value.stringValue !== undefined) {
+                      return attr.value.stringValue;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  return "No response text available";
+}
 </script>
 
 <template>
@@ -254,7 +383,8 @@ const table = useVueTable({
         <Icon class="size-8" name="lucide:loader-circle" />
       </div>
 
-      <div v-else-if="error"
+      <div
+v-else-if="error"
         class="mt-8 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive">
         <p>{{ error.message || 'Failed to load responses' }}</p>
       </div>
@@ -265,18 +395,23 @@ const table = useVueTable({
           <!-- For rows, we loop over the tables `getHeaderGroups` function -->
           <UiTableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id" class="bg-muted/50">
             <!-- For each header, we loop over the headers in the headerGroup -->
-            <UiTableHead v-for="header in headerGroup.headers" :key="header.id" :colspan="header.colSpan"
+            <UiTableHead
+v-for="header in headerGroup.headers" :key="header.id" :colspan="header.colSpan"
               :class="header.column.getCanSort() ? 'cursor-pointer select-none' : ''"
               class="relative h-10 select-none border-t" @click="header.column.getToggleSortingHandler()?.($event)">
               <div class="flex w-full items-center gap-3 whitespace-nowrap">
                 <!-- Render the header cell -->
-                <FlexRender v-if="!header.isPlaceholder" :render="header.column.columnDef.header"
+                <FlexRender
+v-if="!header.isPlaceholder" :render="header.column.columnDef.header"
                   :props="header.getContext()" />
-                <Icon v-if="header.column.getIsSorted() == 'asc'" name="lucide:chevron-up"
+                <Icon
+v-if="header.column.getIsSorted() == 'asc'" name="lucide:chevron-up"
                   class="size-4 shrink-0 text-muted-foreground" />
-                <Icon v-else-if="header.column.getIsSorted() == 'desc'" name="lucide:chevron-down"
+                <Icon
+v-else-if="header.column.getIsSorted() == 'desc'" name="lucide:chevron-down"
                   class="size-4 shrink-0 text-muted-foreground" />
-                <Icon v-else-if="header.column.getCanSort()" name="lucide:chevrons-up-down"
+                <Icon
+v-else-if="header.column.getCanSort()" name="lucide:chevrons-up-down"
                   class="size-4 shrink-0 text-muted-foreground/30" />
               </div>
             </UiTableHead>
@@ -287,7 +422,8 @@ const table = useVueTable({
           <template v-if="table.getRowModel().rows?.length">
             <template v-for="row in table.getRowModel().rows" :key="row.id">
               <!-- Regular row -->
-              <UiTableRow :data-state="row.getIsSelected() && 'selected'" class="cursor-pointer hover:bg-muted/50"
+              <UiTableRow
+:data-state="row.getIsSelected() && 'selected'" class="cursor-pointer hover:bg-muted/50"
                 @click="row.toggleExpanded()">
                 <!-- For each cell in the row, loop over the visible cells -->
                 <UiTableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
@@ -309,7 +445,7 @@ const table = useVueTable({
                       <div>
                         <h3 class="font-medium text-sm mb-2">Response</h3>
                         <pre
-                          class="text-xs bg-muted p-2 rounded max-h-80 overflow-auto">{{ row.original.attributes?.["gen_ai.response.text"] || "No response text available" }}</pre>
+                          class="text-xs bg-muted p-2 rounded max-h-80 overflow-auto">{{ getResponseText(row.original) }}</pre>
                       </div>
                     </div>
                   </div>
