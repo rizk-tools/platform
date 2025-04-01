@@ -50,6 +50,9 @@ export const auth = betterAuth({
   plugins: [
     apiKey({
       enableMetadata: true,
+      rateLimit: {
+        enabled: false,
+      }
     }),
     organization({
       async sendInvitationEmail (data) {
