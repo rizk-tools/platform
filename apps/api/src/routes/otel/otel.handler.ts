@@ -23,12 +23,17 @@ const ExportTraceServiceRequest = root.lookupType('opentelemetry.proto.collector
 
 async function handleOtelRequest (c: any, rawBody: Buffer) {
   const key = c.req.header('authorization') || "";
+  const [type, token] = key.split(' ');
 
-  console.log(`Received request with key: ${key}`);
+  if (type !== 'Bearer' || !token) {
+    return c.text("Invalid API key", HttpStatusCodes.UNAUTHORIZED);
+  }
+
+  console.log(`Received request with key: ${token}`);
 
   const { valid, error } = await auth.api.verifyApiKey({
     body: {
-      key
+      key: token
     },
   });
 
