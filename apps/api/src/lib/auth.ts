@@ -46,12 +46,12 @@ export const auth = betterAuth({
       await sendEmail(user.email, "Verify your email address", html);
     },
   },
-  trustedOrigins: ["http://localhost:3000"],
+  trustedOrigins: [process.env.ORIGIN_URL!],
   plugins: [
     apiKey(),
     organization({
       async sendInvitationEmail (data) {
-        const inviteLink = `https://example.com/accept-invitation/${data.id}`
+        const inviteLink = `${process.env.ORIGIN_URL}/accept-invitation/${data.id}`
         sendEmail(
           data.email,
           `Invitation to join ${data.organization.name}`,

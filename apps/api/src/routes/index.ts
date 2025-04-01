@@ -14,7 +14,7 @@ import reports from "@/routes/reports/reports.index";
 export function registerRoutes (app: AppOpenAPI) {
   return app
     .use("*", cors({
-      origin: process.env.ORIGIN_URL || "*",
+      origin: process.env.ORIGIN_URL!,
       allowHeaders: ["Content-Type", "Authorization"],
       allowMethods: ["POST", "GET", "PUT", "DELETE", "OPTIONS"],
       exposeHeaders: ["Content-Length"],
