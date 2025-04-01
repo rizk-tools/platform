@@ -10,10 +10,11 @@ import type { TracesRoute, LogsRoute, MetricsRoute } from "./otel.routes";
  * Verify API key and extract organization ID
  */
 async function verifyApiKey (c: any): Promise<{ isValid: boolean; organizationId?: string }> {
-  const header = c.req.header('authorization') || "";
+  const header = c.req.header('Authorization') || "";
   const [type, token] = header.split(' ');
 
   if (type !== 'Bearer' || !token) {
+    console.error('Invalid API key', { type, token });
     return { isValid: false };
   }
 
@@ -25,6 +26,7 @@ async function verifyApiKey (c: any): Promise<{ isValid: boolean; organizationId
   const organizationId = key?.metadata?.organizationId || '1';
 
   if (!valid || error || !organizationId) {
+    console.error('Invalid API key', { valid, error, organizationId });
     return { isValid: false };
   }
 
