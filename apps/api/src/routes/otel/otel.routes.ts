@@ -28,6 +28,14 @@ const commonConfig = {
       },
       description: "Invalid API key",
     },
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: {
+      content: {
+        "text/plain": {
+          schema: z.string(),
+        },
+      },
+      description: "Error processing data",
+    },
   },
 };
 

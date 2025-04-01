@@ -15,7 +15,8 @@
     "db:push": "bunx drizzle-kit push",
     "db:generate": "bunx drizzle-kit generate",
     "db:migrate": "bunx drizzle-kit migrate",
-    "auth:generate": "bunx @better-auth/cli@latest generate"
+    "auth:generate": "bunx @better-auth/cli@latest generate",
+    "gen:protobuf": "mkdir -p src/generated && bunx pbjs -t static-module -w es6 -o src/generated/otlp.js ../../proto/**/*.proto && bunx pbts -o src/generated/otlp.d.ts src/generated/otlp.js"
   },
   "dependencies": {
     "@clickhouse/client": "^1.11.0",

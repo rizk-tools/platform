@@ -1,77 +1,146 @@
 import * as HttpStatusCodes from "stoker/http-status-codes";
-import * as protobuf from 'protobufjs'
+import clickhouse from "@/lib/clickhouse";
+import { opentelemetry } from "@/generated/otlp";
 
 import type { AppRouteHandler } from "@/lib/types";
-
 import { auth } from "@/lib/auth";
-
 import type { TracesRoute, LogsRoute, MetricsRoute } from "./otel.routes";
 
-declare function enqueueForForwarding (rawBody: Buffer, tenantId: string): Promise<void>;
-
-async function saveToClickHouse (rawBody: Buffer, tenantId: string) {
-
-}
-
-const root = await protobuf.load([
-  "../../proto/opentelemetry/proto/collector/trace/v1/trace_service.proto",
-  "../../proto/opentelemetry/proto/trace/v1/trace.proto",
-  "../../proto/opentelemetry/proto/common/v1/common.proto",
-  "../../proto/opentelemetry/proto/resource/v1/resource.proto",
-])
-
-const ExportTraceServiceRequest = root.lookupType('opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest')
-
-async function handleOtelRequest (c: any, rawBody: Buffer) {
+/**
+ * Verify API key and extract organization ID
+ */
+async function verifyApiKey (c: any): Promise<{ isValid: boolean; organizationId?: string }> {
   const header = c.req.header('authorization') || "";
   const [type, token] = header.split(' ');
 
   if (type !== 'Bearer' || !token) {
-    return c.text("Invalid API key", HttpStatusCodes.UNAUTHORIZED);
+    return { isValid: false };
   }
 
-  console.log(`Received request with key: ${token}`);
-
   const { valid, error, key } = await auth.api.verifyApiKey({
-    body: {
-      key: token
-    },
+    body: { key: token }
   });
 
   const organizationId = key?.metadata?.organizationId;
-  console.log(`Validation result: ${valid}, error: ${error}`);
 
   if (!valid || error || !organizationId) {
+    return { isValid: false };
+  }
+
+  return { isValid: true, organizationId };
+}
+
+/**
+ * Handler for trace data - uses generated types
+ */
+export const traces: AppRouteHandler<TracesRoute> = async (c) => {
+  const { isValid, organizationId } = await verifyApiKey(c);
+
+  if (!isValid) {
     return c.text("Invalid API key", HttpStatusCodes.UNAUTHORIZED);
   }
 
-  console.log(`Raw body: ${rawBody}`);
+  try {
+    const rawBody = await c.req.raw.arrayBuffer().then(Buffer.from);
+    const message = opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest.decode(new Uint8Array(rawBody));
+    const request = opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest.toObject(message, {
+      longs: Number,
+      enums: String,
+      bytes: Array,
+      defaults: true
+    });
 
-  const message = ExportTraceServiceRequest.decode(new Uint8Array(rawBody))
-  const object = ExportTraceServiceRequest.toObject(message, { enums: String, longs: String })
+    // Store trace data
+    await clickhouse.insert({
+      table: 'traces_raw',
+      values: [{
+        tenant_id: organizationId,
+        timestamp: new Date(),
+        data: JSON.stringify(request)
+      }],
+      format: 'JSONEachRow'
+    });
 
-  console.log(`Object: ${JSON.stringify(object)}`);
-
-  await Promise.all([
-    saveToClickHouse(rawBody, key?.metadata?.organizationId),
-    enqueueForForwarding(rawBody, key?.metadata?.organizationId)
-  ]);
-
-  return c.text("OK", HttpStatusCodes.OK);
-}
-
-export const traces: AppRouteHandler<TracesRoute> = async (c) => {
-  const rawBody = await c.req.raw.arrayBuffer().then(Buffer.from);
-  return handleOtelRequest(c, rawBody);
+    return c.text("OK", HttpStatusCodes.OK);
+  } catch (error) {
+    console.error('Error processing trace data:', error);
+    return c.text("Error processing data", HttpStatusCodes.INTERNAL_SERVER_ERROR);
+  }
 };
 
+/**
+ * Handler for logs data - uses generated types
+ */
 export const logs: AppRouteHandler<LogsRoute> = async (c) => {
-  const rawBody = await c.req.raw.arrayBuffer().then(Buffer.from);
-  return handleOtelRequest(c, rawBody);
+  const { isValid, organizationId } = await verifyApiKey(c);
+
+  if (!isValid) {
+    return c.text("Invalid API key", HttpStatusCodes.UNAUTHORIZED);
+  }
+
+  try {
+    const rawBody = await c.req.raw.arrayBuffer().then(Buffer.from);
+    const message = opentelemetry.proto.collector.logs.v1.ExportLogsServiceRequest.decode(new Uint8Array(rawBody));
+    const request = opentelemetry.proto.collector.logs.v1.ExportLogsServiceRequest.toObject(message, {
+      longs: Number,
+      enums: String,
+      bytes: Array,
+      defaults: true
+    });
+
+    // Store logs data
+    await clickhouse.insert({
+      table: 'logs_raw',
+      values: [{
+        tenant_id: organizationId,
+        timestamp: new Date(),
+        data: JSON.stringify(request)
+      }],
+      format: 'JSONEachRow'
+    });
+
+    return c.text("OK", HttpStatusCodes.OK);
+  } catch (error) {
+    console.error('Error processing logs data:', error);
+    return c.text("Error processing data", HttpStatusCodes.INTERNAL_SERVER_ERROR);
+  }
 };
 
+/**
+ * Handler for metrics data - uses generated types
+ */
 export const metrics: AppRouteHandler<MetricsRoute> = async (c) => {
-  const rawBody = await c.req.raw.arrayBuffer().then(Buffer.from);
-  return handleOtelRequest(c, rawBody);
+  const { isValid, organizationId } = await verifyApiKey(c);
+
+  if (!isValid) {
+    return c.text("Invalid API key", HttpStatusCodes.UNAUTHORIZED);
+  }
+
+  try {
+    const rawBody = await c.req.raw.arrayBuffer().then(Buffer.from);
+    const message = opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest.decode(new Uint8Array(rawBody));
+    const request = opentelemetry.proto.collector.metrics.v1.ExportMetricsServiceRequest.toObject(message, {
+      longs: Number,
+      enums: String,
+      bytes: Array,
+      defaults: true
+    });
+
+    // Store metrics data
+    await clickhouse.insert({
+      table: 'metrics_raw',
+      values: [{
+        tenant_id: organizationId,
+        timestamp: new Date(),
+        data: JSON.stringify(request)
+      }],
+      format: 'JSONEachRow'
+    });
+
+    return c.text("OK", HttpStatusCodes.OK);
+  } catch (error) {
+    console.error('Error processing metrics data:', error);
+    return c.text("Error processing data", HttpStatusCodes.INTERNAL_SERVER_ERROR);
+  }
 };
 
