@@ -48,7 +48,9 @@ export const auth = betterAuth({
   },
   trustedOrigins: [process.env.ORIGIN_URL!],
   plugins: [
-    apiKey(),
+    apiKey({
+      enableMetadata: true,
+    }),
     organization({
       async sendInvitationEmail (data) {
         const inviteLink = `${process.env.ORIGIN_URL}/accept-invitation/${data.id}`

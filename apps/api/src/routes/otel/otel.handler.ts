@@ -7,10 +7,11 @@ import { auth } from "@/lib/auth";
 
 import type { TracesRoute, LogsRoute, MetricsRoute } from "./otel.routes";
 
-// External functions (to be implemented)
-declare function getTenantByApiKey (apiKey: string): Promise<{ id: string } | null>;
-declare function saveToClickHouse (rawBody: Buffer, tenantId: string): Promise<void>;
 declare function enqueueForForwarding (rawBody: Buffer, tenantId: string): Promise<void>;
+
+async function saveToClickHouse (rawBody: Buffer, tenantId: string) {
+
+}
 
 const root = await protobuf.load([
   "../../proto/opentelemetry/proto/collector/trace/v1/trace_service.proto",
@@ -22,8 +23,8 @@ const root = await protobuf.load([
 const ExportTraceServiceRequest = root.lookupType('opentelemetry.proto.collector.trace.v1.ExportTraceServiceRequest')
 
 async function handleOtelRequest (c: any, rawBody: Buffer) {
-  const key = c.req.header('authorization') || "";
-  const [type, token] = key.split(' ');
+  const header = c.req.header('authorization') || "";
+  const [type, token] = header.split(' ');
 
   if (type !== 'Bearer' || !token) {
     return c.text("Invalid API key", HttpStatusCodes.UNAUTHORIZED);
@@ -31,15 +32,16 @@ async function handleOtelRequest (c: any, rawBody: Buffer) {
 
   console.log(`Received request with key: ${token}`);
 
-  const { valid, error } = await auth.api.verifyApiKey({
+  const { valid, error, key } = await auth.api.verifyApiKey({
     body: {
       key: token
     },
   });
 
+  const organizationId = key?.metadata?.organizationId;
   console.log(`Validation result: ${valid}, error: ${error}`);
 
-  if (!valid || error) {
+  if (!valid || error || !organizationId) {
     return c.text("Invalid API key", HttpStatusCodes.UNAUTHORIZED);
   }
 
@@ -49,15 +51,10 @@ async function handleOtelRequest (c: any, rawBody: Buffer) {
   const object = ExportTraceServiceRequest.toObject(message, { enums: String, longs: String })
 
   console.log(`Object: ${JSON.stringify(object)}`);
-  const tenant = await getTenantByApiKey(key);
-
-  if (!tenant) {
-    return c.text("Invalid API key", HttpStatusCodes.UNAUTHORIZED);
-  }
 
   await Promise.all([
-    saveToClickHouse(rawBody, tenant.id),
-    enqueueForForwarding(rawBody, tenant.id)
+    saveToClickHouse(rawBody, key?.metadata?.organizationId),
+    enqueueForForwarding(rawBody, key?.metadata?.organizationId)
   ]);
 
   return c.text("OK", HttpStatusCodes.OK);
