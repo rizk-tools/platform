@@ -175,7 +175,9 @@
 <script setup lang="ts">
 import { useQuery, useMutation, useQueryCache } from '@pinia/colada';
 import { auth } from '@/lib/auth';
+import { useAuthStore } from '@/stores/auth';
 
+const authStore = useAuthStore();
 const expiry = ref('never');
 const expiryOptions = ref([
   { label: 'Never expires', value: 'never' },
@@ -242,10 +244,15 @@ const createKeyMutation = useMutation({
       expiresIn = days * 24 * 60 * 60; // Convert days to seconds
     }
 
+    const organizationId = authStore.session?.session.activeOrganizationId;
+
     const { data, error } = await auth.apiKey.create({
       name: newKeyName.value,
       expiresIn,
-      prefix: 'rizk_'
+      prefix: 'rizk_',
+      metadata: {
+        organizationId
+      }
     });
 
     if (error) {
