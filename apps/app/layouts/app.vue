@@ -160,8 +160,12 @@
                       <UiSidebarMenuSubButton as-child
                         class="hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-950 dark:hover:text-green-400 transition-colors duration-200"
                         :class="[isRouteActive(subItem.url) && 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 font-medium']">
-                        <NuxtLink :href="subItem.url">
-                          <span>{{ subItem.title }}</span>
+                        <NuxtLink :href="subItem.url" class="flex items-center justify-between w-full">
+                          <span class="flex-1 truncate">{{ subItem.title }}</span>
+                          <span v-if="subItem.url === '#'"
+                            class="inline-flex items-center rounded-full bg-gray-200 dark:bg-gray-800 px-2 text-[10px] font-medium text-gray-700 dark:text-gray-300">
+                            Coming Soon
+                          </span>
                         </NuxtLink>
                       </UiSidebarMenuSubButton>
                     </UiSidebarMenuSubItem>
@@ -311,7 +315,7 @@ const route = useRoute();
 // Check if a route is active
 function isRouteActive (url: string): boolean {
   if (!url || url === '#') return false;
-  
+
   // For parent routes (that end with just the path segment), use exact matching
   if (!url.includes('#') && !url.endsWith('/')) {
     const isParentRoute = !url.split('/').pop()?.includes('.');
@@ -319,7 +323,7 @@ function isRouteActive (url: string): boolean {
       return route.path === url;
     }
   }
-  
+
   // For subpages, keep the startsWith behavior
   return route.path === url || route.path.startsWith(url + '/');
 }
