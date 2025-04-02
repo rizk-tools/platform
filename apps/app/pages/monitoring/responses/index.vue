@@ -670,13 +670,15 @@ function getResponseText (item: MonitoringResponse): string {
                     <div class="grid grid-cols-2 gap-4">
                       <div>
                         <h3 class="font-medium text-sm mb-2">Request Details</h3>
-                        <pre
-                          class="text-xs bg-muted p-2 rounded max-h-80 overflow-auto">{{ JSON.stringify(row.original, null, 2) }}</pre>
+                        <div class="p-2 rounded max-h-80 overflow-auto">
+                          <Shiki lang="js" :code="JSON.stringify(row.original, null, 2)" />
+                        </div>
                       </div>
                       <div>
                         <h3 class="font-medium text-sm mb-2">Response</h3>
-                        <pre
-                          class="text-xs bg-muted p-2 rounded max-h-80 overflow-auto">{{ getResponseText(row.original) }}</pre>
+                        <div class="p-2 rounded max-h-80 overflow-auto">
+                          <Shiki :code="getResponseText(row.original)" />
+                        </div>
                       </div>
                     </div>
                   </div>

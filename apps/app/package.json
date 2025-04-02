@@ -33,6 +33,7 @@
     "hono": "^4.7.4",
     "markdown-it": "^14.1.0",
     "nuxt": "^3.16.0",
+    "nuxt-shiki": "0.3.0",
     "pinia": "^3.0.1",
     "radix-vue": "^1.9.17",
     "tailwind-variants": "^1.0.0",
@@ -48,6 +49,7 @@
     "@vueuse/core": "^13.0.0",
     "prettier": "^3.5.3",
     "prettier-plugin-tailwindcss": "^0.6.11",
+    "shiki": "^3.2.1",
     "typescript": "^5.8.2"
   },
   "trustedDependencies": [
