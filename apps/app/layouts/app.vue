@@ -241,7 +241,7 @@
         <UiSeparator orientation="vertical" class="mr-2 h-4" />
         <UiBreadcrumbs :items="breadcrumbItems" />
       </UiNavbar>
-      <div class="grid auto-rows-min gap-4 p-4 md:grid-cols-3">
+      <div class="grid auto-rows-min gap-4 p-4 md:grid-cols-3 overflow-y-auto">
         <slot />
       </div>
     </UiSidebarInset>
