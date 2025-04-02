@@ -22,8 +22,7 @@ async function verifyApiKey (c: any): Promise<{ isValid: boolean; organizationId
     body: { key: token }
   });
 
-  // TODO: Remove this once we have a proper organization ID
-  const organizationId = key?.metadata?.organizationId || '1';
+  const organizationId = key?.metadata?.organizationId;
 
   if (!valid || error || !organizationId) {
     console.error('Invalid API key', { valid, error, organizationId });
