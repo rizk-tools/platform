@@ -52,7 +52,7 @@ export default defineNuxtConfig({
     preset: "bun",
     routeRules: {
       "/api/**": {
-        proxy: `${process.env.API_URL}/**`
+        proxy: `${process.env.NUXT_PUBLIC_API_URL}/**`
       }
     },
   },

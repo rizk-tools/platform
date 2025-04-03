@@ -46,10 +46,11 @@ const error = ref<string | null>(null)
 
 // Construct the URL with parameters
 const reportUrl = ref('')
+const config = useRuntimeConfig()
 
 // Create a function to update the report URL
 const updateReportUrl = () => {
-  const baseUrl = `${process.env.API_URL}/reports`
+  const baseUrl = `${config.public.apiUrl}/reports`
   const params = new URLSearchParams({
     orgId: 'demo',
     orgName: 'Acme Corp',
