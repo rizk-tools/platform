@@ -32,7 +32,7 @@ const navItems: NavItem[] = [
     color: "blue",
     items: [
       { title: "Overview", url: "/", description: "View your system at a glance" },
-      { title: "Analytics", url: "#", description: "Analyze your compliance metrics" },
+      { title: "Analytics", url: "/analytics", description: "Analyze your compliance metrics" },
       { title: "Reports", url: "#", description: "Generate detailed reports" },
     ],
   },

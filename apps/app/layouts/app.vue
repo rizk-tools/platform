@@ -343,7 +343,7 @@ const navItems: NavItem[] = [
     isActive: true,
     items: [
       { title: "Overview", url: "/" },
-      { title: "Analytics", url: "#" },
+      { title: "Analytics", url: "/analytics" },
       { title: "Reports", url: "/reports" },
     ],
   },
