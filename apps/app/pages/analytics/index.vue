@@ -8,6 +8,8 @@ import ModelCostsCard from "~/components/Analytics/ModelCostsCard.vue"
 import ScoresCard from "~/components/Analytics/ScoresCard.vue"
 import TracesLineChartCard from "~/components/Analytics/TracesLineChartCard.vue"
 import ModelUsageCard from "~/components/Analytics/ModelUsageCard.vue"
+import ScoresChartCard from "~/components/Analytics/ScoresChartCard.vue"
+import UserConsumptionCard from "~/components/Analytics/UserConsumptionCard.vue"
 
 definePageMeta({ layout: "app" })
 
@@ -136,38 +138,118 @@ const scoresData = ref([
 // --- Dummy data para Model Usage (gráfico de línea) ---
 const totalTokens = ref(41000)
 const usageChartData = ref({
-    labels: ["10/28", "10/29", "10/30", "10/31", "11/01", "11/02", "11/03"],
-    datasets: [
-        {
-            label: "gpt-4o-mini",
-            data: [0.05, 0.08, 0.09, 0.12, 0.18, 0.11, 0.06],
-            borderColor: "#3B82F6",
-            backgroundColor: "rgba(59,130,246,0.2)",
-            fill: true,
-            tension: 0.3
-        },
-        {
-            label: "text-embedding-ada-002",
-            data: [0.02, 0.03, 0.02, 0.04, 0.05, 0.07, 0.03],
-            borderColor: "#14B8A6",
-            backgroundColor: "rgba(20,184,166,0.2)",
-            fill: true,
-            tension: 0.3
-        }
-    ]
-})
-const usageChartOptions = ref({
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-        legend: { display: true },
-        tooltip: { enabled: true }
+    cost: {
+        labels: ["10/28", "10/29", "10/30", "10/31", "11/01", "11/02", "11/03"],
+        datasets: [
+            {
+                label: "gpt-4o-mini",
+                data: [0.05, 0.08, 0.09, 0.12, 0.18, 0.11, 0.06],
+                borderColor: "#3B82F6",
+                backgroundColor: "rgba(59,130,246,0.2)",
+                fill: true,
+                tension: 0.3
+            },
+            {
+                label: "text-embedding-ada-002",
+                data: [0.02, 0.03, 0.02, 0.04, 0.05, 0.07, 0.03],
+                borderColor: "#14B8A6",
+                backgroundColor: "rgba(20,184,166,0.2)",
+                fill: true,
+                tension: 0.3
+            }
+        ]
     },
-    scales: {
-        x: { display: true },
-        y: { beginAtZero: true }
+    tokens: {
+        labels: ["10/28", "10/29", "10/30", "10/31", "11/01", "11/02", "11/03"],
+        datasets: [
+            {
+                label: "gpt-4o-mini",
+                data: [11000, 14500, 15000, 17500, 22000, 16500, 12000],
+                borderColor: "#3B82F6",
+                backgroundColor: "rgba(59,130,246,0.2)",
+                fill: true,
+                tension: 0.3
+            },
+            {
+                label: "text-embedding-ada-002",
+                data: [5000, 6500, 6200, 7000, 8200, 9500, 6100],
+                borderColor: "#14B8A6",
+                backgroundColor: "rgba(20,184,166,0.2)",
+                fill: true,
+                tension: 0.3
+            }
+        ]
     }
 })
+
+const usageChartOptions = ref({
+    cost: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: true, position: 'bottom' },
+            tooltip: { enabled: true }
+        },
+        scales: {
+            x: { display: true },
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: value => `$${value}` // formato de dinero
+                }
+            }
+        }
+    },
+    tokens: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: true, position: 'bottom' },
+            tooltip: { enabled: true }
+        },
+        scales: {
+            x: { display: true },
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: value => `${value.toLocaleString()} tokens`
+                }
+            }
+        }
+    }
+})
+
+const userData = [
+    { userId: 'u-Gt4Q16r', cost: 0.088549, traces: 120 },
+    { userId: 'u-svQKrqI', cost: 0.020938, traces: 80 },
+    { userId: 'u-n7hV1Gr', cost: 0.011903, traces: 64 },
+    { userId: 'u-3vQK16r', cost: 0.009876, traces: 50 },
+    { userId: 'u-4tQKrqI', cost: 0.007654, traces: 30 },
+    { userId: 'u-5n7hV1Gr', cost: 0.005432, traces: 20 },
+    { userId: 'u-6vQK16r', cost: 0.003210, traces: 10 }
+]
+
+
+const chartData = {
+    labels: ["10/16/24", "10/19/24", "10/22/24",],
+    datasets: [
+        {
+            label: "Min only (annotation)",
+            data: [0.8, 0.9, 0.85],
+            borderColor: "#6366F1",
+            tension: 0.3,
+            fill: false
+        },
+        {
+            label: "conciseness-v1 (eval)",
+            data: [3, 2.8, 3.5],
+            borderColor: "#F97316",
+            tension: 0.3,
+            fill: false
+        }
+    ]
+}
+
 </script>
 
 <template>
@@ -252,6 +334,18 @@ const usageChartOptions = ref({
                 <ModelUsageCard :totalCost="totalCost" :totalTokens="totalTokens" :usageChartData="usageChartData"
                     :usageChartOptions="usageChartOptions" />
             </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Tarjeta de User Consumption (Tabla) -->
+            <div class="rounded-xl border bg-card p-5 shadow-sm transition-all hover:shadow-md">
+                <UserConsumptionCard :totalCost="totalCost" :userData="userData" />
+            </div>
+
+            <!-- Tarjeta de Scores (Line Chart) -->
+            <div class="rounded-xl border bg-card p-5 shadow-sm transition-all hover:shadow-md">
+                <ScoresChartCard :chartData="chartData" :chartOptions="tracesLineOptions" />
+            </div>
+
         </div>
     </div>
 </template>
