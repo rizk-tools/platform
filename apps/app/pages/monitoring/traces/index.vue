@@ -128,7 +128,7 @@ function transformResponseData (data: unknown[]): MonitoringResponse[] {
 const { data: rawItems, isLoading, error } = useQuery({
   key: ['monitoring', 'responses'],
   query: async () => {
-    const res = await client.api.monitoring.responses.$get()
+    const res = await client.api.monitoring.traces.$get()
 
     if (!res.ok) {
       throw new Error(`Failed to fetch monitoring responses: ${res.status} ${res.statusText}`)
@@ -300,7 +300,7 @@ const columns = [
 
       // Create a container for the text with line clamp and proper text wrapping
       return h("div", {
-        class: "max-w-sm w-full whitespace-normal break-words line-clamp-3 text-sm font-medium",
+        class: "max-w-sm text-sm font-medium line-clamp-3 break-words whitespace-pre-wrap",
         title: value // Show full text on hover
       }, value);
     },

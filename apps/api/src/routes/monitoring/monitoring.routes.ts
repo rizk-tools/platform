@@ -43,8 +43,8 @@ const errorSchema = z.object({
   error: z.string()
 });
 
-export const listResponses = createRoute({
-  path: "/monitoring/responses",
+export const listTraces = createRoute({
+  path: "/monitoring/traces",
   method: "get",
   tags,
   responses: {
@@ -67,4 +67,29 @@ export const listResponses = createRoute({
   },
 });
 
-export type ListResponsesRoute = typeof listResponses; 
+export const listMetrics = createRoute({
+  path: "/monitoring/metrics",
+  method: "get",
+  tags,
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.array(telemetryItemSchema),
+      "The list of OpenTelemetry metrics",
+    ),
+    [HttpStatusCodes.UNAUTHORIZED]: jsonContent(
+      errorSchema,
+      "User is not authenticated"
+    ),
+    [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+      errorSchema,
+      "Bad request, e.g. missing organization"
+    ),
+    [HttpStatusCodes.INTERNAL_SERVER_ERROR]: jsonContent(
+      errorSchema,
+      "Internal server error"
+    ),
+  },
+});
+
+export type ListTracesRoute = typeof listTraces;
+export type ListMetricsRoute = typeof listMetrics; 
