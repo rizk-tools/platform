@@ -62,7 +62,7 @@ const props = defineProps<{
         </div>
 
         <!-- Gráfico de línea con altura suficiente -->
-        <div class="h-56">
+        <div class="h-80">
             <Line :data="chartData" :options="chartOptions" />
         </div>
     </div>
