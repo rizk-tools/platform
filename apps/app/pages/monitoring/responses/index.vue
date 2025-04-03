@@ -348,46 +348,6 @@ const columns = [
       }, value);
     },
   }),
-  columnHelper.accessor(row => extractAttributes(row, "traceloop.association.properties.conversation_id") ||
-    extractAttributes(row, "conversation.id"), {
-    id: "conversationId",
-    header: "Conversation ID",
-    sortingFn: "text",
-    cell: ({ getValue }) => {
-      const value = getValue() as string;
-      return value ? h("span", { class: "text-xs font-mono" }, value) : "N/A";
-    },
-  }),
-  columnHelper.accessor(row => extractAttributes(row, "traceloop.association.properties.project_id"), {
-    id: "projectId",
-    header: "Project",
-    sortingFn: "text",
-    cell: ({ getValue }) => {
-      const value = getValue() as string;
-      return value || "N/A";
-    },
-  }),
-  columnHelper.accessor(row => extractAttributes(row, "traceloop.association.properties.agent_id"), {
-    id: "agentId",
-    header: "Agent",
-    sortingFn: "text",
-    cell: ({ getValue }) => {
-      const value = getValue() as string;
-      return value || "N/A";
-    },
-  }),
-  columnHelper.accessor(row => {
-    return extractAttributes(row, "traceloop.workflow.name") ||
-      extractAttributes(row, "traceloop.entity.name");
-  }, {
-    id: "workflow",
-    header: "Workflow",
-    sortingFn: "text",
-    cell: ({ getValue }) => {
-      const value = getValue() as string;
-      return value || "N/A";
-    },
-  }),
   columnHelper.accessor(row => {
     const decision = getGuardrailDecision(row);
     return decision.allowed;
@@ -412,40 +372,6 @@ const columns = [
       );
     },
   }),
-  columnHelper.accessor(row => extractAttributes(row, "fast_rules.confidence"), {
-    id: "confidence",
-    header: "Confidence",
-    cell: ({ getValue }) => {
-      const value = getValue() as number;
-      if (value === undefined || value === null) return "N/A";
-
-      const percentage = value * 100;
-      let barColor = "bg-destructive";
-
-      if (percentage >= 80) barColor = "bg-emerald-500";
-      else if (percentage >= 60) barColor = "bg-amber-500";
-      else if (percentage >= 40) barColor = "bg-orange-500";
-
-      return h("div", { class: "w-full" }, [
-        h("div", { class: "text-xs mb-1" }, `${percentage.toFixed(1)}%`),
-        h("div", { class: "w-full bg-muted rounded-full h-1.5" }, [
-          h("div", {
-            class: `${barColor} h-1.5 rounded-full`,
-            style: `width: ${percentage}%`
-          })
-        ])
-      ]);
-    },
-  }),
-  columnHelper.accessor(row => extractResourceAttributes(row, "service.name"), {
-    id: "service",
-    header: "Service",
-    sortingFn: "text",
-    cell: ({ getValue }) => {
-      const value = getValue() as string;
-      return value || "N/A";
-    },
-  }),
   columnHelper.accessor(row => extractAttributes(row, "gen_ai.request.model"), {
     id: "model",
     header: "Model",
@@ -459,29 +385,6 @@ const columns = [
     id: "duration",
     header: "Response Time",
     cell: ({ getValue }) => getValue(),
-  }),
-  columnHelper.accessor(row => extractAttributes(row, "gen_ai.usage.total_tokens") ||
-    extractAttributes(row, "llm.usage.total_tokens"), {
-    id: "tokens",
-    header: "Tokens",
-    cell: ({ getValue }) => {
-      return new Intl.NumberFormat("en-US", {
-        notation: "compact",
-        maximumFractionDigits: 1,
-      }).format(Number(getValue() || 0));
-    },
-  }),
-  columnHelper.accessor(row => extractAttributes(row, "gen_ai.usage.cost"), {
-    id: "cost",
-    header: "Cost",
-    cell: ({ getValue }) => {
-      return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        minimumFractionDigits: 4,
-        maximumFractionDigits: 4,
-      }).format(Number(getValue() || 0));
-    },
   }),
   columnHelper.accessor(row => extractResourceAttributes(row, "deployment.environment"), {
     id: "environment",
@@ -667,19 +570,102 @@ function getResponseText (item: MonitoringResponse): string {
               <tr v-if="row.getIsExpanded()">
                 <td :colspan="columns.length" class="p-0">
                   <div class="p-4 bg-muted/30 border-t border-b">
-                    <div class="grid grid-cols-2 gap-4">
-                      <div>
-                        <h3 class="font-medium text-sm mb-2">Request Details</h3>
-                        <div class="p-2 rounded max-h-80 overflow-auto">
-                          <Shiki lang="js" :code="JSON.stringify(row.original, null, 2)" />
+                    <div class="space-y-6">
+                      <!-- All important metadata in a grid -->
+                      <div class="grid grid-cols-3 gap-4">
+                        <div v-if="extractAttributes(row.original, 'traceloop.association.properties.conversation_id') ||
+                          extractAttributes(row.original, 'conversation.id')" class="space-y-1">
+                          <h4 class="text-xs text-muted-foreground font-medium">Conversation ID</h4>
+                          <p class="text-xs font-mono">
+                            {{ extractAttributes(row.original, 'traceloop.association.properties.conversation_id') ||
+                              extractAttributes(row.original, 'conversation.id') }}
+                          </p>
+                        </div>
+                        <div v-if="extractAttributes(row.original, 'traceloop.association.properties.project_id')"
+                          class="space-y-1">
+                          <h4 class="text-xs text-muted-foreground font-medium">Project ID</h4>
+                          <p class="text-sm">{{ extractAttributes(row.original,
+                            'traceloop.association.properties.project_id') }}</p>
+                        </div>
+                        <div v-if="extractAttributes(row.original, 'traceloop.association.properties.agent_id')"
+                          class="space-y-1">
+                          <h4 class="text-xs text-muted-foreground font-medium">Agent ID</h4>
+                          <p class="text-sm">{{ extractAttributes(row.original,
+                            'traceloop.association.properties.agent_id') }}</p>
+                        </div>
+                        <div v-if="extractAttributes(row.original, 'gen_ai.usage.total_tokens') ||
+                          extractAttributes(row.original, 'llm.usage.total_tokens')" class="space-y-1">
+                          <h4 class="text-xs text-muted-foreground font-medium">Tokens</h4>
+                          <p class="text-sm">
+                            {{ new Intl.NumberFormat("en-US").format(Number(extractAttributes(row.original,
+                              'gen_ai.usage.total_tokens') ||
+                              extractAttributes(row.original, 'llm.usage.total_tokens') || 0)) }}
+                          </p>
+                        </div>
+                        <div v-if="extractAttributes(row.original, 'gen_ai.usage.cost')" class="space-y-1">
+                          <h4 class="text-xs text-muted-foreground font-medium">Cost</h4>
+                          <p class="text-sm">
+                            {{ new Intl.NumberFormat("en-US", {
+                              style: "currency",
+                              currency: "USD",
+                              minimumFractionDigits: 4,
+                              maximumFractionDigits: 4
+                            }).format(Number(extractAttributes(row.original, 'gen_ai.usage.cost') || 0)) }}
+                          </p>
+                        </div>
+                        <div v-if="extractAttributes(row.original, 'traceloop.workflow.name') ||
+                          extractAttributes(row.original, 'traceloop.entity.name')" class="space-y-1">
+                          <h4 class="text-xs text-muted-foreground font-medium">Workflow</h4>
+                          <p class="text-sm">
+                            {{ extractAttributes(row.original, 'traceloop.workflow.name') ||
+                              extractAttributes(row.original, 'traceloop.entity.name') }}
+                          </p>
+                        </div>
+                        <div v-if="extractResourceAttributes(row.original, 'service.name')" class="space-y-1">
+                          <h4 class="text-xs text-muted-foreground font-medium">Service</h4>
+                          <p class="text-sm">{{ extractResourceAttributes(row.original, 'service.name') }}</p>
                         </div>
                       </div>
+
+                      <!-- Request and Response in tabs -->
                       <div>
-                        <h3 class="font-medium text-sm mb-2">Response</h3>
-                        <div class="p-2 rounded max-h-80 overflow-auto">
-                          <Shiki :code="getResponseText(row.original)" />
+                        <div class="flex border-b">
+                          <button class="px-4 py-2 text-sm font-medium border-b-2 border-primary" disabled>
+                            Request & Response
+                          </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mt-4">
+                          <div>
+                            <h3 class="font-medium text-sm mb-2">Query</h3>
+                            <div
+                              class="rounded border p-3 bg-white dark:bg-gray-900 overflow-auto whitespace-pre-wrap font-mono text-sm">
+                              {{ extractAttributes(row.original, 'traceloop.association.properties.query') ||
+                                extractAttributes(row.original, 'traceloop.entity.input') || 'No query data available' }}
+                            </div>
+                          </div>
+                          <div>
+                            <h3 class="font-medium text-sm mb-2">Response</h3>
+                            <div
+                              class="rounded border p-3 bg-white dark:bg-gray-900 overflow-auto whitespace-pre-wrap font-mono text-sm">
+                              {{ getResponseText(row.original) }}
+                            </div>
+                          </div>
                         </div>
                       </div>
+
+                      <UiAccordion>
+                        <UiAccordionItem value="item-4">
+                          <UiAccordionHeader>
+                            <UiAccordionTrigger>View Raw Data</UiAccordionTrigger>
+                          </UiAccordionHeader>
+                          <UiAccordionContent>
+                            <div class="max-h-96 overflow-y-auto" style="max-width: 690px;">
+                              <Shiki lang="json" :code="JSON.stringify(row.original, null, 2)" />
+                            </div>
+                          </UiAccordionContent>
+                        </UiAccordionItem>
+                      </UiAccordion>
+
                     </div>
                   </div>
                 </td>
