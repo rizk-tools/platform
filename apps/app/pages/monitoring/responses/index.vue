@@ -272,49 +272,6 @@ definePageMeta({
 const columnHelper = createColumnHelper<MonitoringResponse>();
 
 const columns = [
-  // Expand/collapse column
-  columnHelper.display({
-    id: "expand",
-    header: "",
-    cell: ({ row }) =>
-      h(
-        "button",
-        {
-          onClick: (e: MouseEvent) => {
-            e.stopPropagation();
-            row.toggleExpanded();
-          },
-          class: "cursor-pointer p-1"
-        },
-        h(Icon, {
-          name: row.getIsExpanded() ? "lucide:chevron-down" : "lucide:chevron-right",
-          class: "size-4"
-        })
-      ),
-  }),
-  columnHelper.accessor("id", {
-    enableSorting: false,
-    enableGlobalFilter: false,
-    header ({ table }) {
-      return h(UiCheckbox, {
-        checked: table.getIsSomeRowsSelected()
-          ? "indeterminate"
-          : table.getIsAllRowsSelected()
-            ? true
-            : false,
-        "onUpdate:checked": (v) =>
-          table.getToggleAllRowsSelectedHandler()({ target: { checked: v } }),
-      });
-    },
-    cell ({ row }) {
-      return h(UiCheckbox, {
-        checked: row.getIsSelected(),
-        disabled: !row.getCanSelect(),
-        "onUpdate:checked": row.getToggleSelectedHandler(),
-        onClick: (e: MouseEvent) => e.stopPropagation(),
-      });
-    },
-  }),
   columnHelper.accessor(row => {
     // Try multiple paths to find the query
     const query = extractAttributes(row, "traceloop.association.properties.query") ||
@@ -461,6 +418,11 @@ const table = useVueTable({
   onExpandedChange: (updaterOrValue) => {
     expanded.value =
       typeof updaterOrValue === "function" ? updaterOrValue(expanded.value) : updaterOrValue;
+
+    const expandedEntries = Object.entries(expanded.value);
+    const expandedEntry = expandedEntries.find(([_, isExpanded]) => isExpanded);
+
+    isSheetOpen.value = !!expandedEntry;
   },
 });
 
@@ -508,10 +470,146 @@ function getResponseText (item: MonitoringResponse): string {
 
   return "No response text available";
 }
+
+
+const selectedRow = computed(() => {
+  // Find the first expanded row ID from the expanded state object
+  const expandedEntries = Object.entries(expanded.value);
+  const expandedEntry = expandedEntries.find(([_, isExpanded]) => isExpanded);
+
+  // If no row is expanded, return null
+  if (!expandedEntry) {
+    return null;
+  }
+
+  // Get the ID of the expanded row
+  const [expandedId] = expandedEntry;
+
+  // Find and return the corresponding row data from the table model
+  return table.getRowModel().rows.find(row => row.id === expandedId);
+});
+
+const isSheetOpen = ref(false);
+
+watch(isSheetOpen, (newValue) => {
+  if (!newValue) {
+    // Clear expanded state when sheet is closed
+    table.setExpanded({});
+  }
+});
 </script>
 
 <template>
   <div class="col-span-3 grid gap-6">
+    <UiSheet v-model:open="isSheetOpen">
+      <UiSheetContent class="max-w-4xl flex flex-col" side="right" title="AI Response Details"
+        description="Detailed information about the AI interaction.">
+        <template #content>
+
+          <div v-if="selectedRow" class="p-4 space-y-6  bg-muted/30 border-t border-b flex-1 overflow-y-auto">
+            <!-- All important metadata in a grid -->
+            <div class="grid grid-cols-3 gap-4">
+              <div v-if="selectedRow && (extractAttributes(selectedRow.original, 'traceloop.association.properties.conversation_id') ||
+                extractAttributes(selectedRow.original, 'conversation.id'))" class="space-y-1">
+                <h4 class="text-xs text-muted-foreground font-medium">Conversation ID</h4>
+                <p class="text-xs font-mono">
+                  {{ extractAttributes(selectedRow.original, 'traceloop.association.properties.conversation_id') ||
+                    extractAttributes(selectedRow.original, 'conversation.id') }}
+                </p>
+              </div>
+              <div
+                v-if="selectedRow && extractAttributes(selectedRow.original, 'traceloop.association.properties.project_id')"
+                class="space-y-1">
+                <h4 class="text-xs text-muted-foreground font-medium">Project ID</h4>
+                <p class="text-sm">{{ extractAttributes(selectedRow.original,
+                  'traceloop.association.properties.project_id') }}</p>
+              </div>
+              <div
+                v-if="selectedRow && extractAttributes(selectedRow.original, 'traceloop.association.properties.agent_id')"
+                class="space-y-1">
+                <h4 class="text-xs text-muted-foreground font-medium">Agent ID</h4>
+                <p class="text-sm">{{ extractAttributes(selectedRow.original,
+                  'traceloop.association.properties.agent_id') }}</p>
+              </div>
+              <div v-if="selectedRow && (extractAttributes(selectedRow.original, 'gen_ai.usage.total_tokens') ||
+                extractAttributes(selectedRow.original, 'llm.usage.total_tokens'))" class="space-y-1">
+                <h4 class="text-xs text-muted-foreground font-medium">Tokens</h4>
+                <p class="text-sm">
+                  {{ new Intl.NumberFormat("en-US").format(Number(extractAttributes(selectedRow.original,
+                    'gen_ai.usage.total_tokens') ||
+                    extractAttributes(selectedRow.original, 'llm.usage.total_tokens') || 0)) }}
+                </p>
+              </div>
+              <div v-if="selectedRow && extractAttributes(selectedRow.original, 'gen_ai.usage.cost')" class="space-y-1">
+                <h4 class="text-xs text-muted-foreground font-medium">Cost</h4>
+                <p class="text-sm">
+                  {{ new Intl.NumberFormat("en-US", {
+                    style: "currency",
+                    currency: "USD",
+                    minimumFractionDigits: 4,
+                    maximumFractionDigits: 4
+                  }).format(Number(extractAttributes(selectedRow.original, 'gen_ai.usage.cost') || 0)) }}
+                </p>
+              </div>
+              <div v-if="selectedRow && (extractAttributes(selectedRow.original, 'traceloop.workflow.name') ||
+                extractAttributes(selectedRow.original, 'traceloop.entity.name'))" class="space-y-1">
+                <h4 class="text-xs text-muted-foreground font-medium">Workflow</h4>
+                <p class="text-sm">
+                  {{ extractAttributes(selectedRow.original, 'traceloop.workflow.name') ||
+                    extractAttributes(selectedRow.original, 'traceloop.entity.name') }}
+                </p>
+              </div>
+              <div v-if="selectedRow && extractResourceAttributes(selectedRow.original, 'service.name')"
+                class="space-y-1">
+                <h4 class="text-xs text-muted-foreground font-medium">Service</h4>
+                <p class="text-sm">{{ extractResourceAttributes(selectedRow.original, 'service.name') }}</p>
+              </div>
+            </div>
+
+            <UiSeparator class="my-4" />
+
+            <!-- Request and Response -->
+            <div class="space-y-4 mt-4">
+              <div>
+                <h3 class="font-medium text-sm mb-2">Query</h3>
+                <div
+                  class="rounded border p-3 bg-white dark:bg-gray-900 overflow-auto whitespace-pre-wrap font-mono text-sm">
+                  {{ extractAttributes(selectedRow.original, 'traceloop.association.properties.query') ||
+                    extractAttributes(selectedRow.original, 'traceloop.entity.input') || 'No query data available' }}
+                </div>
+              </div>
+              <div>
+                <h3 class="font-medium text-sm mb-2">Response</h3>
+                <div
+                  class="rounded border p-3 bg-white dark:bg-gray-900 overflow-auto whitespace-pre-wrap font-mono text-sm">
+                  {{ getResponseText(selectedRow.original) }}
+                </div>
+              </div>
+              <div>
+                <h3 class="font-medium text-sm mb-2">Raw Data</h3>
+                <div
+                  class="rounded border p-3 bg-white dark:bg-gray-900 overflow-auto whitespace-pre-wrap font-mono text-sm max-h-80">
+                  <Shiki lang="json" :code="JSON.stringify(selectedRow.original, null, 2)" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-else class="flex-1 flex items-center justify-center">
+            <p class="text-muted-foreground">Loading details...</p>
+          </div>
+
+        </template>
+        <template #footer>
+          <UiSheetFooter>
+            <UiSheetClose as-child>
+              <UiButton type="button">Close</UiButton>
+            </UiSheetClose>
+          </UiSheetFooter>
+        </template>
+      </UiSheetContent>
+    </UiSheet>
+
+
     <CommonPageTitle title="Monitoring" description="Monitor your AI responses" />
 
     <div>
@@ -521,7 +619,7 @@ function getResponseText (item: MonitoringResponse): string {
 
       <!-- Loading and error states -->
       <div v-if="isLoading" class="mt-8 flex justify-center">
-        <Icon class="size-8" name="lucide:loader-circle" />
+        <Icon class="size-8 animate-spin" name="lucide:loader-circle" />
       </div>
 
       <div v-else-if="error"
@@ -565,111 +663,6 @@ function getResponseText (item: MonitoringResponse): string {
                   <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
                 </UiTableCell>
               </UiTableRow>
-
-              <!-- Expanded row content -->
-              <tr v-if="row.getIsExpanded()">
-                <td :colspan="columns.length" class="p-0">
-                  <div class="p-4 bg-muted/30 border-t border-b">
-                    <div class="space-y-6">
-                      <!-- All important metadata in a grid -->
-                      <div class="grid grid-cols-3 gap-4">
-                        <div v-if="extractAttributes(row.original, 'traceloop.association.properties.conversation_id') ||
-                          extractAttributes(row.original, 'conversation.id')" class="space-y-1">
-                          <h4 class="text-xs text-muted-foreground font-medium">Conversation ID</h4>
-                          <p class="text-xs font-mono">
-                            {{ extractAttributes(row.original, 'traceloop.association.properties.conversation_id') ||
-                              extractAttributes(row.original, 'conversation.id') }}
-                          </p>
-                        </div>
-                        <div v-if="extractAttributes(row.original, 'traceloop.association.properties.project_id')"
-                          class="space-y-1">
-                          <h4 class="text-xs text-muted-foreground font-medium">Project ID</h4>
-                          <p class="text-sm">{{ extractAttributes(row.original,
-                            'traceloop.association.properties.project_id') }}</p>
-                        </div>
-                        <div v-if="extractAttributes(row.original, 'traceloop.association.properties.agent_id')"
-                          class="space-y-1">
-                          <h4 class="text-xs text-muted-foreground font-medium">Agent ID</h4>
-                          <p class="text-sm">{{ extractAttributes(row.original,
-                            'traceloop.association.properties.agent_id') }}</p>
-                        </div>
-                        <div v-if="extractAttributes(row.original, 'gen_ai.usage.total_tokens') ||
-                          extractAttributes(row.original, 'llm.usage.total_tokens')" class="space-y-1">
-                          <h4 class="text-xs text-muted-foreground font-medium">Tokens</h4>
-                          <p class="text-sm">
-                            {{ new Intl.NumberFormat("en-US").format(Number(extractAttributes(row.original,
-                              'gen_ai.usage.total_tokens') ||
-                              extractAttributes(row.original, 'llm.usage.total_tokens') || 0)) }}
-                          </p>
-                        </div>
-                        <div v-if="extractAttributes(row.original, 'gen_ai.usage.cost')" class="space-y-1">
-                          <h4 class="text-xs text-muted-foreground font-medium">Cost</h4>
-                          <p class="text-sm">
-                            {{ new Intl.NumberFormat("en-US", {
-                              style: "currency",
-                              currency: "USD",
-                              minimumFractionDigits: 4,
-                              maximumFractionDigits: 4
-                            }).format(Number(extractAttributes(row.original, 'gen_ai.usage.cost') || 0)) }}
-                          </p>
-                        </div>
-                        <div v-if="extractAttributes(row.original, 'traceloop.workflow.name') ||
-                          extractAttributes(row.original, 'traceloop.entity.name')" class="space-y-1">
-                          <h4 class="text-xs text-muted-foreground font-medium">Workflow</h4>
-                          <p class="text-sm">
-                            {{ extractAttributes(row.original, 'traceloop.workflow.name') ||
-                              extractAttributes(row.original, 'traceloop.entity.name') }}
-                          </p>
-                        </div>
-                        <div v-if="extractResourceAttributes(row.original, 'service.name')" class="space-y-1">
-                          <h4 class="text-xs text-muted-foreground font-medium">Service</h4>
-                          <p class="text-sm">{{ extractResourceAttributes(row.original, 'service.name') }}</p>
-                        </div>
-                      </div>
-
-                      <!-- Request and Response in tabs -->
-                      <div>
-                        <div class="flex border-b">
-                          <button class="px-4 py-2 text-sm font-medium border-b-2 border-primary" disabled>
-                            Request & Response
-                          </button>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4 mt-4">
-                          <div>
-                            <h3 class="font-medium text-sm mb-2">Query</h3>
-                            <div
-                              class="rounded border p-3 bg-white dark:bg-gray-900 overflow-auto whitespace-pre-wrap font-mono text-sm">
-                              {{ extractAttributes(row.original, 'traceloop.association.properties.query') ||
-                                extractAttributes(row.original, 'traceloop.entity.input') || 'No query data available' }}
-                            </div>
-                          </div>
-                          <div>
-                            <h3 class="font-medium text-sm mb-2">Response</h3>
-                            <div
-                              class="rounded border p-3 bg-white dark:bg-gray-900 overflow-auto whitespace-pre-wrap font-mono text-sm">
-                              {{ getResponseText(row.original) }}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <UiAccordion>
-                        <UiAccordionItem value="item-4">
-                          <UiAccordionHeader>
-                            <UiAccordionTrigger>View Raw Data</UiAccordionTrigger>
-                          </UiAccordionHeader>
-                          <UiAccordionContent>
-                            <div class="max-h-96 overflow-y-auto" style="max-width: 690px;">
-                              <Shiki lang="json" :code="JSON.stringify(row.original, null, 2)" />
-                            </div>
-                          </UiAccordionContent>
-                        </UiAccordionItem>
-                      </UiAccordion>
-
-                    </div>
-                  </div>
-                </td>
-              </tr>
             </template>
           </template>
           <!-- If there are no rows, show a message -->
