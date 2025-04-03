@@ -49,7 +49,7 @@ const reportUrl = ref('')
 
 // Create a function to update the report URL
 const updateReportUrl = () => {
-  const baseUrl = 'http://localhost:3001/reports'
+  const baseUrl = `${process.env.API_URL}/reports`
   const params = new URLSearchParams({
     orgId: 'demo',
     orgName: 'Acme Corp',
